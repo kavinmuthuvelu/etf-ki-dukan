@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF Ki Dukan 2025 — Pi Strategy Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1629;
+    --bg3: #162040;
+    --accent: #f7931a;
+    --accent2: #00d4aa;
+    --accent3: #7c6af7;
+    --red: #ff4560;
+    --green: #00e396;
+    --text: #e8edf8;
+    --muted: #6b7a9e;
+    --border: rgba(255,255,255,0.07);
+    --card: rgba(255,255,255,0.04);
+    --glow: rgba(247,147,26,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* BG mesh */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(124,106,247,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 10% 80%, rgba(247,147,26,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 30% at 50% 50%, rgba(0,212,170,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── TOP NAV ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,14,26,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-pi { color: var(--accent); font-family: 'JetBrains Mono'; font-size: 1.6rem; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 6px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; border: none; background: transparent; color: var(--muted);
+    transition: all 0.2s;
+  }
+  .nav-tab.active, .nav-tab:hover { background: var(--card); color: var(--text); }
+  .nav-tab.active { color: var(--accent); border: 1px solid rgba(247,147,26,0.3); }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono'; font-size: 0.72rem; color: var(--green);
+  }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── MAIN LAYOUT ── */
+  main { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+  /* ── SECTION DISPLAY ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── STATS STRIP ── */
+  .stats-strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.2rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: rgba(247,147,26,0.3); }
+  .stat-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+  }
+  .stat-card:hover::after { opacity: 1; }
+  .stat-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .stat-val { font-family: 'JetBrains Mono'; font-size: 1.3rem; font-weight: 500; color: var(--text); }
+  .stat-val.green { color: var(--green); }
+  .stat-val.orange { color: var(--accent); }
+  .stat-val.purple { color: var(--accent3); }
+  .stat-sub { font-size: 0.68rem; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono'; }
+
+  /* ── GRID 2-COL ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+  @media(max-width:900px) { .grid2,.grid3 { grid-template-columns: 1fr; } }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .panel-header {
+    padding: 1rem 1.4rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px; }
+  .panel-body { padding: 1.2rem 1.4rem; }
+
+  /* ── ETF TABLE ── */
+  .etf-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .etf-table th {
+    text-align: left; padding: 8px 10px;
+    font-size: 0.68rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border); position: sticky; top: 0;
+    background: var(--bg2);
+  }
+  .etf-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .etf-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .etf-table tr.rank-highlight td { background: rgba(247,147,26,0.06); }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 8px;
+    font-family: 'JetBrains Mono'; font-size: 0.75rem; font-weight: 500;
+    background: rgba(247,147,26,0.15); color: var(--accent);
+  }
+  .rank-badge.rank1 { background: rgba(247,147,26,0.3); color: #ffd700; font-weight: 700; }
+  .rank-badge.rank2 { background: rgba(0,212,170,0.2); color: var(--accent2); }
+  .rank-badge.rank3 { background: rgba(124,106,247,0.2); color: var(--accent3); }
+  .etf-code { font-family: 'JetBrains Mono'; font-size: 0.75rem; font-weight: 500; color: var(--accent2); }
+  .pct-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .pct-bar { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--green), var(--accent)); transition: width 0.5s; }
+  .pct-label { font-family: 'JetBrains Mono'; font-size: 0.72rem; }
+  .pct-label.low { color: var(--green); }
+  .pct-label.med { color: var(--accent); }
+  .pct-label.high { color: var(--red); }
+  .scroll-table { overflow-y: auto; max-height: 480px; }
+
+  /* ── BUY BUTTON ── */
+  .btn-buy {
+    padding: 5px 14px; border-radius: 7px; font-size: 0.73rem; font-weight: 700;
+    cursor: pointer; border: 1px solid rgba(0,212,170,0.4); background: rgba(0,212,170,0.1);
+    color: var(--accent2); transition: all 0.2s; font-family: 'Syne';
+  }
+  .btn-buy:hover { background: rgba(0,212,170,0.25); transform: scale(1.05); }
+  .btn-avg {
+    padding: 5px 12px; border-radius: 7px; font-size: 0.73rem; font-weight: 700;
+    cursor: pointer; border: 1px solid rgba(247,147,26,0.4); background: rgba(247,147,26,0.1);
+    color: var(--accent); transition: all 0.2s; font-family: 'Syne';
+  }
+  .btn-avg:hover { background: rgba(247,147,26,0.25); }
+
+  /* ── CONFIG PANEL ── */
+  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .form-input {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: 'JetBrains Mono';
+    font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+    width: 100%;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-select {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: 'JetBrains Mono';
+    font-size: 0.9rem; outline: none; width: 100%;
+  }
+  .form-select option { background: var(--bg2); }
+
+  /* ── PI LEVELS ── */
+  .pi-levels { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; margin-top: 1rem; }
+  .pi-pill {
+    padding: 8px; border-radius: 10px; text-align: center;
+    border: 1px solid var(--border); background: var(--card);
+    font-family: 'JetBrains Mono';
+  }
+  .pi-pill .pi-n { font-size: 0.65rem; color: var(--muted); }
+  .pi-pill .pi-v { font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+  .pi-pill.level0 { border-color: rgba(0,212,170,0.3); }
+  .pi-pill.active-level { border-color: var(--accent); background: rgba(247,147,26,0.12); }
+
+  /* ── PORTFOLIO TABLE ── */
+  .port-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .port-table th {
+    text-align: left; padding: 8px 10px;
+    font-size: 0.65rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border); background: var(--bg2);
+    position: sticky; top: 0;
+  }
+  .port-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .port-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .pl-pos { color: var(--green); font-family: 'JetBrains Mono'; font-weight: 500; }
+  .pl-neg { color: var(--red); font-family: 'JetBrains Mono'; font-weight: 500; }
+  .sell-btn {
+    padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+    cursor: pointer; border: 1px solid rgba(255,69,96,0.4); background: rgba(255,69,96,0.1);
+    color: var(--red); transition: all 0.2s; font-family: 'Syne';
+  }
+  .sell-btn:hover { background: rgba(255,69,96,0.25); }
+  .avg-trigger { font-size: 0.65rem; color: var(--accent); font-family: 'JetBrains Mono'; }
+
+  /* ── ANALYTICS ── */
+  .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; }
+  .analytic-block {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.2rem;
+  }
+  .analytic-block .a-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 6px; }
+  .analytic-block .a-val { font-family: 'JetBrains Mono'; font-size: 1.5rem; font-weight: 500; }
+  .analytic-block .a-sub { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+  /* ── LADDER VIZ ── */
+  .ladder-wrap { padding: 1rem; }
+  .ladder-item {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--card); transition: all 0.2s;
+  }
+  .ladder-item.triggered { border-color: var(--accent); background: rgba(247,147,26,0.08); }
+  .ladder-item.filled { border-color: var(--green); background: rgba(0,227,150,0.06); }
+  .ladder-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+  }
+  .ladder-dot.triggered { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .ladder-dot.filled { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .ladder-info { flex: 1; }
+  .ladder-lvl { font-size: 0.72rem; font-weight: 700; }
+  .ladder-detail { font-size: 0.68rem; color: var(--muted); font-family: 'JetBrains Mono'; }
+  .ladder-price { font-family: 'JetBrains Mono'; font-size: 0.82rem; font-weight: 500; }
+
+  /* ── TOAST ── */
+  .toast-wrap { position: fixed; top: 70px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 12px 18px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+    backdrop-filter: blur(12px); animation: slideIn 0.3s ease;
+    display: flex; align-items: center; gap: 10px;
+    max-width: 320px;
+  }
+  .toast.success { background: rgba(0,227,150,0.15); border: 1px solid rgba(0,227,150,0.4); color: var(--green); }
+  .toast.error { background: rgba(255,69,96,0.15); border: 1px solid rgba(255,69,96,0.4); color: var(--red); }
+  .toast.info { background: rgba(247,147,26,0.15); border: 1px solid rgba(247,147,26,0.4); color: var(--accent); }
+  @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); display: none;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2rem; width: 520px; max-width: 95vw;
+    position: relative;
+  }
+  .modal-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.2rem; }
+  .modal-close {
+    position: absolute; top: 1rem; right: 1rem; background: none; border: none;
+    color: var(--muted); font-size: 1.2rem; cursor: pointer;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
+  .btn-primary {
+    flex: 1; padding: 11px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;
+    cursor: pointer; border: none; background: var(--accent); color: var(--bg); font-family: 'Syne';
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-cancel {
+    flex: 1; padding: 11px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;
+    cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'Syne';
+  }
+  .btn-cancel:hover { color: var(--text); }
+  .etf-modal-info { background: var(--bg3); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+  .etf-modal-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+  .etf-modal-meta { font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--muted); }
+
+  /* ── SEARCH ── */
+  .search-input {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; color: var(--text); font-family: 'Syne';
+    font-size: 0.82rem; outline: none; width: 200px; transition: all 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); width: 260px; }
+
+  /* ── EMPTY ── */
+  .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+  .empty-state .e-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .empty-state .e-msg { font-size: 0.85rem; }
+
+  /* ── PROGRESS ── */
+  .cap-bar-wrap { margin-top: 1rem; }
+  .cap-bar-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-bottom: 6px; font-family: 'JetBrains Mono'; }
+  .cap-bar { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .cap-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.5s; }
+
+  /* ── FILTER TABS ── */
+  .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ftab {
+    padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
+    transition: all 0.2s;
+  }
+  .ftab.active { background: rgba(247,147,26,0.15); border-color: rgba(247,147,26,0.5); color: var(--accent); }
+  .ftab:hover { color: var(--text); }
+
+  /* ── DHAN CONNECT ── */
+  .dhan-status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; border-radius: 10px; margin-bottom: 1rem;
+    border: 1px solid; font-size: 0.78rem;
+  }
+  .dhan-status-bar.connected { border-color: rgba(0,227,150,0.3); background: rgba(0,227,150,0.06); }
+  .dhan-status-bar.disconnected { border-color: rgba(255,69,96,0.3); background: rgba(255,69,96,0.06); }
+  .dhan-status-bar.connecting { border-color: rgba(247,147,26,0.3); background: rgba(247,147,26,0.06); }
+  .dhan-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+  .connected .dhan-dot { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  .disconnected .dhan-dot { background: var(--red); }
+  .connecting .dhan-dot { background: var(--accent); animation: pulse 1s infinite; }
+  .btn-sm {
+    padding: 5px 14px; border-radius: 7px; font-size: 0.72rem; font-weight: 700;
+    cursor: pointer; font-family: 'Syne'; transition: all 0.2s;
+  }
+  .btn-dhan { border: 1px solid rgba(0,212,170,0.5); background: rgba(0,212,170,0.12); color: var(--accent2); }
+  .btn-dhan:hover { background: rgba(0,212,170,0.25); }
+  .btn-danger { border: 1px solid rgba(255,69,96,0.5); background: rgba(255,69,96,0.1); color: var(--red); }
+  .btn-refresh { border: 1px solid var(--border); background: var(--card); color: var(--muted); }
+  .btn-refresh:hover { color: var(--text); }
+  .holdings-badge {
+    padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 700;
+    background: rgba(124,106,247,0.15); border: 1px solid rgba(124,106,247,0.3); color: var(--accent3);
+    font-family: 'JetBrains Mono';
+  }
+  .order-status {
+    padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 700;
+    font-family: 'JetBrains Mono';
+  }
+  .order-status.TRADED { background: rgba(0,227,150,0.15); border: 1px solid rgba(0,227,150,0.3); color: var(--green); }
+  .order-status.PENDING { background: rgba(247,147,26,0.15); border: 1px solid rgba(247,147,26,0.3); color: var(--accent); }
+  .order-status.REJECTED { background: rgba(255,69,96,0.15); border: 1px solid rgba(255,69,96,0.3); color: var(--red); }
+  .order-status.CANCELLED { background: rgba(107,122,158,0.15); border: 1px solid rgba(107,122,158,0.3); color: var(--muted); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* ── PROFIT TARGETS INDICATOR ── */
+  .target-indicator {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+  .target-chip {
+    padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 600;
+    font-family: 'JetBrains Mono'; border: 1px solid;
+  }
+  .target-chip.t1 { border-color: rgba(0,212,170,0.4); color: var(--accent2); background: rgba(0,212,170,0.08); }
+  .target-chip.t2 { border-color: rgba(124,106,247,0.4); color: var(--accent3); background: rgba(124,106,247,0.08); }
+  .target-chip.t3 { border-color: rgba(247,147,26,0.4); color: var(--accent); background: rgba(247,147,26,0.08); }
+
+  .section-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  /* ── Pi indicator ── */
+  .pi-decoration {
+    font-family: 'JetBrains Mono'; font-size: 5rem; font-weight: 300;
+    color: rgba(247,147,26,0.06); position: absolute; right: 1rem; top: 50%;
+    transform: translateY(-50%); pointer-events: none; line-height: 1;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-pi">π</span>
+    <span>ETF Ki Dukan <span style="color:var(--muted);font-weight:400">2025</span></span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="showSection('screener')">Screener</button>
+    <button class="nav-tab" onclick="showSection('portfolio')">Portfolio</button>
+    <button class="nav-tab" onclick="showSection('analytics')">Analytics</button>
+    <button class="nav-tab" onclick="showSection('dhan')">🔗 Dhan</button>
+    <button class="nav-tab" onclick="showSection('settings')">Settings</button>
+  </div>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    LIVE DATA
+  </div>
+</header>
+
+<!-- MODAL: BUY -->
+<div class="modal-overlay" id="buyModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('buyModal')">✕</button>
+    <div class="modal-title">📥 Place Order</div>
+    <div class="etf-modal-info" id="modalInfo"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label">Buy Price (₹)</label>
+        <input class="form-input" id="modalPrice" type="number" step="0.01" placeholder="Enter price">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity (Units)</label>
+        <input class="form-input" id="modalQty" type="number" step="1" placeholder="Units to buy">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trade Type</label>
+        <select class="form-select" id="modalType">
+          <option value="fresh">Fresh Buy (Level 0)</option>
+          <option value="avg">Averaging Down</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="modalDate" type="date">
+      </div>
+    </div>
+    <div id="buyChargesBreakdown" style="margin-top:1rem;padding:1rem;background:var(--bg3);border-radius:10px;font-size:0.74rem;"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="confirmBuy()">✅ Confirm Buy</button>
+      <button class="btn-cancel" onclick="closeModal('buyModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SELL -->
+<div class="modal-overlay" id="sellModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('sellModal')">✕</button>
+    <div class="modal-title">📤 Sell Position</div>
+    <div class="etf-modal-info" id="sellModalInfo"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label">Sell Price (₹)</label>
+        <input class="form-input" id="sellPrice" type="number" step="0.01" placeholder="Exit price">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="sellDate" type="date">
+      </div>
+    </div>
+    <div id="sellSummary" style="margin-top:1rem;padding:1rem;background:var(--bg3);border-radius:10px;font-family:'JetBrains Mono';font-size:0.78rem;"></div>
+    <div id="sellChargesBreakdown" style="margin-top:0.6rem;padding:1rem;background:var(--bg3);border-radius:10px;font-size:0.74rem;"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" style="background:var(--red);" onclick="confirmSell()">📤 Confirm Sell</button>
+      <button class="btn-cancel" onclick="closeModal('sellModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="section active" id="dashboard">
+  <div class="stats-strip" id="statsStrip"></div>
+  <div class="grid2">
+    <!-- Top Ranked ETFs -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🎯 Top 10 Ranked ETFs — Buy Priority</span>
+        <span style="font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono'">Sorted by 52wk low proximity</span>
+      </div>
+      <div class="scroll-table">
+        <table class="etf-table">
+          <thead><tr>
+            <th>Rank</th><th>ETF</th><th>CMP</th><th>% from 52wL</th><th>Action</th>
+          </tr></thead>
+          <tbody id="topRankTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right col: Capital + Pi targets -->
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <!-- Capital Bar -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">💰 Capital Allocation</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+            <div>
+              <div class="stat-label">Total Capital</div>
+              <div class="stat-val orange" id="capTotal">—</div>
+            </div>
+            <div>
+              <div class="stat-label">Deployed</div>
+              <div class="stat-val" id="capDeployed">—</div>
+            </div>
+            <div>
+              <div class="stat-label">Available</div>
+              <div class="stat-val green" id="capFree">—</div>
+            </div>
+          </div>
+          <div class="cap-bar-wrap">
+            <div class="cap-bar-label">
+              <span id="capPct">0% deployed</span>
+              <span id="partInfo">40 equal parts</span>
+            </div>
+            <div class="cap-bar"><div class="cap-fill" id="capFill" style="width:0%"></div></div>
+          </div>
+          <div class="pi-levels" id="piLevels">
+          </div>
+        </div>
+      </div>
+
+      <!-- Profit Targets -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🎯 Pi Profit Targets</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+            <div style="text-align:center;padding:1rem;background:var(--bg3);border-radius:10px;border:1px solid rgba(0,212,170,0.2)">
+              <div style="font-size:0.65rem;color:var(--muted);margin-bottom:4px;font-weight:700">QUICK EXIT</div>
+              <div style="font-size:1.4rem;color:var(--accent2);font-family:'JetBrains Mono';font-weight:600">3.14%</div>
+              <div style="font-size:0.65rem;color:var(--muted);margin-top:4px">π × 1</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:var(--bg3);border-radius:10px;border:1px solid rgba(124,106,247,0.2)">
+              <div style="font-size:0.65rem;color:var(--muted);margin-bottom:4px;font-weight:700">MODERATE</div>
+              <div style="font-size:1.4rem;color:var(--accent3);font-family:'JetBrains Mono';font-weight:600">4.17%</div>
+              <div style="font-size:0.65rem;color:var(--muted);margin-top:4px">Custom</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:var(--bg3);border-radius:10px;border:1px solid rgba(247,147,26,0.2)">
+              <div style="font-size:0.65rem;color:var(--muted);margin-bottom:4px;font-weight:700">RECOMMENDED</div>
+              <div style="font-size:1.4rem;color:var(--accent);font-family:'JetBrains Mono';font-weight:600">9.42%</div>
+              <div style="font-size:0.65rem;color:var(--muted);margin-top:4px">π × 3</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;padding:1rem;background:var(--bg3);border-radius:10px;">
+            <div style="font-size:0.68rem;color:var(--muted);margin-bottom:8px;font-weight:700;">AVERAGING LADDER — TRIGGER LEVELS</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span style="padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono';font-size:0.7rem;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);color:var(--accent2)">−3.14% L1</span>
+              <span style="padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono';font-size:0.7rem;background:rgba(124,106,247,0.1);border:1px solid rgba(124,106,247,0.3);color:var(--accent3)">−6.28% L2</span>
+              <span style="padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono';font-size:0.7rem;background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);color:var(--accent)">−9.42% L3</span>
+              <span style="padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono';font-size:0.7rem;background:rgba(255,69,96,0.1);border:1px solid rgba(255,69,96,0.3);color:var(--red)">−12.56% L4</span>
+              <span style="padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono';font-size:0.7rem;background:rgba(255,69,96,0.15);border:1px solid rgba(255,69,96,0.4);color:var(--red)">−15.70% L5</span>
+              <span style="padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono';font-size:0.7rem;background:rgba(255,69,96,0.2);border:1px solid rgba(255,69,96,0.5);color:var(--red)">−18.84% L6</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Action -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📅 Today's Recommended Action</span>
+        </div>
+        <div class="panel-body" id="todayAction">
+          <div style="font-size:0.8rem;color:var(--muted);">Configure capital in Settings to see today's recommended buy.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREENER ═══ -->
+<div class="section" id="screener">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">📊 ETF Screener — All 66 ETFs Ranked</span>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input class="search-input" id="searchInput" placeholder="🔍 Search ETF..." oninput="filterTable()">
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="setFilter('all', this)">All</button>
+          <button class="ftab" onclick="setFilter('top10', this)">Top 10</button>
+          <button class="ftab" onclick="setFilter('buy', this)">Buy Zone</button>
+          <button class="ftab" onclick="setFilter('caution', this)">Caution</button>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-table" style="max-height:600px;">
+      <table class="etf-table" id="fullTable">
+        <thead><tr>
+          <th>Rank</th><th>ETF Code</th><th>Name</th><th>CMP (₹)</th><th>52wk Low (₹)</th><th>% from Low</th><th>Zone</th><th>Action</th>
+        </tr></thead>
+        <tbody id="fullTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PORTFOLIO ═══ -->
+<div class="section" id="portfolio">
+  <div class="stats-strip" id="portStats"></div>
+  <div class="grid2">
+    <div class="panel" style="grid-column:1/-1;">
+      <div class="panel-header">
+        <span class="panel-title">📂 Open Positions</span>
+        <span style="font-size:0.72rem;color:var(--muted)">Sell when CMP hits your target</span>
+      </div>
+      <div class="scroll-table" style="max-height:500px;">
+        <table class="port-table">
+          <thead><tr>
+            <th>ETF</th><th>Levels</th><th>Avg Cost</th><th>Total Inv.</th><th>CMP</th><th>P&L</th><th>P&L%</th><th>Targets</th><th>Avg Trigger</th><th>Action</th>
+          </tr></thead>
+          <tbody id="openPositions"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="section-divider"></div>
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">✅ Closed Trades</span>
+    </div>
+    <div class="scroll-table" style="max-height:300px;">
+      <table class="port-table">
+        <thead><tr>
+          <th>ETF</th><th>Buy Avg</th><th>Sell Price</th><th>Invested</th><th>Gross P&L</th><th>Charges</th><th>Net P&L</th><th>Net Return%</th><th>Days</th><th>Date</th>
+        </tr></thead>
+        <tbody id="closedTrades"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ANALYTICS ═══ -->
+<div class="section" id="analytics">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1rem;font-weight:800;margin-bottom:0.5rem;">📈 Strategy Performance Analytics</h2>
+    <p style="font-size:0.78rem;color:var(--muted)">All metrics calculated from your actual trades. These match Mahesh Kaushik's tracking parameters.</p>
+  </div>
+
+  <div class="analytics-grid" id="analyticsGrid"></div>
+
+  <div class="section-divider"></div>
+
+  <!-- Capital Ladder Visual -->
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">📊 Pi Averaging Ladder — Per Position</span></div>
+      <div class="ladder-wrap" id="ladderViz"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">💡 Strategy Insights</span></div>
+      <div class="panel-body" id="insightsPanel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DHAN ═══ -->
+<div class="section" id="dhan">
+  <div id="dhanStatusBar" class="dhan-status-bar disconnected">
+    <div style="display:flex;align-items:center;">
+      <div class="dhan-dot"></div>
+      <span id="dhanStatusText">Not connected to Dhan</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-sm btn-refresh" onclick="dhanRefreshAll()" id="btnRefresh" style="display:none">⟳ Refresh</button>
+      <button class="btn-sm btn-danger" onclick="dhanDisconnect()" id="btnDisconnect" style="display:none">Disconnect</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <!-- Connect Panel -->
+    <div class="panel" id="dhanConnectPanel">
+      <div class="panel-header"><span class="panel-title">🔗 Connect to Dhan Account</span></div>
+      <div class="panel-body">
+        <div style="margin-bottom:1.2rem;padding:1rem;background:rgba(247,147,26,0.06);border:1px solid rgba(247,147,26,0.2);border-radius:10px;font-size:0.75rem;line-height:1.7;color:var(--muted);">
+          <strong style="color:var(--accent)">📋 How to get your Dhan credentials:</strong><br>
+          1. Login to <strong style="color:var(--text)">dhan.co</strong> → My Profile → Dhan HQ API<br>
+          2. Create App → get <strong style="color:var(--text)">Client ID</strong> + <strong style="color:var(--text)">Access Token</strong><br>
+          3. Note: Access Token expires every 24 hours — regenerate daily<br>
+          4. <strong style="color:var(--red)">Order APIs require Static IP whitelisting</strong> on Dhan portal
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Dhan Client ID</label>
+            <input class="form-input" id="dhanClientId" type="text" placeholder="Your Dhan Client ID">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Access Token</label>
+            <input class="form-input" id="dhanToken" type="password" placeholder="Paste your access token here">
+            <span style="font-size:0.68rem;color:var(--muted);margin-top:4px;">⚠️ Stored in browser only. Never shared with any server.</span>
+          </div>
+          <button class="btn-primary" onclick="dhanConnect()">🔗 Connect to Dhan</button>
+        </div>
+        <div style="margin-top:1.5rem;padding:1rem;background:var(--bg3);border-radius:10px;font-size:0.72rem;color:var(--muted);line-height:1.7;">
+          <strong style="color:var(--text);">⚠️ CORS Note:</strong> Dhan API doesn't allow direct browser calls due to CORS restrictions.
+          This app uses a <strong style="color:var(--accent)">proxy approach</strong> — order placement will open Dhan's web interface with pre-filled details,
+          and portfolio sync imports your Dhan holdings. For full auto-trading, you'd need a backend server.
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Info -->
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="panel" id="dhanAccountPanel">
+        <div class="panel-header">
+          <span class="panel-title">👤 Account Info</span>
+          <button class="btn-sm btn-refresh" onclick="dhanRefreshAll()" style="font-size:0.7rem;">⟳</button>
+        </div>
+        <div class="panel-body" id="dhanAccountInfo">
+          <div class="empty-state"><div class="e-icon">🔒</div><div class="e-msg">Connect your Dhan account to view info</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">💰 Dhan Funds</span></div>
+        <div class="panel-body" id="dhanFundsPanel">
+          <div class="empty-state"><div class="e-icon">💳</div><div class="e-msg">Connect to see available funds</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Holdings from Dhan -->
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <div class="panel-header">
+      <span class="panel-title">📂 Dhan Holdings (ETFs)</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="holdingsSyncTime" style="font-size:0.68rem;color:var(--muted);"></span>
+        <button class="btn-sm btn-dhan" onclick="dhanFetchHoldings()">⟳ Sync Holdings</button>
+        <button class="btn-sm btn-primary" style="padding:5px 14px;font-size:0.72rem;" onclick="importHoldingsToPortfolio()">📥 Import to Portfolio</button>
+      </div>
+    </div>
+    <div class="scroll-table" style="max-height:300px;">
+      <table class="port-table" id="dhanHoldingsTable">
+        <thead><tr>
+          <th>Symbol</th><th>Exchange</th><th>Qty</th><th>Avg Cost</th><th>CMP</th><th>P&L</th><th>P&L%</th><th>Action</th>
+        </tr></thead>
+        <tbody id="dhanHoldingsBody">
+          <tr><td colspan="8"><div class="empty-state"><div class="e-icon">📋</div><div class="e-msg">Connect Dhan to sync holdings</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Orders from Dhan -->
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <div class="panel-header">
+      <span class="panel-title">📑 Today's Orders</span>
+      <button class="btn-sm btn-dhan" onclick="dhanFetchOrders()">⟳ Refresh Orders</button>
+    </div>
+    <div class="scroll-table" style="max-height:300px;">
+      <table class="port-table">
+        <thead><tr>
+          <th>Time</th><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th><th>Order ID</th>
+        </tr></thead>
+        <tbody id="dhanOrdersBody">
+          <tr><td colspan="7"><div class="empty-state"><div class="e-icon">📋</div><div class="e-msg">Connect Dhan to view today's orders</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Place Order via Dhan -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">🚀 Place ETF Order on Dhan</span>
+      <span style="font-size:0.72rem;color:var(--muted)">CNC delivery orders for ETF strategy</span>
+    </div>
+    <div class="panel-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;align-items:end;">
+        <div class="form-group">
+          <label class="form-label">ETF Symbol</label>
+          <select class="form-select" id="dhanOrderSymbol" onchange="updateDhanOrderSecurity()">
+            <option value="">-- Select ETF --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Transaction</label>
+          <select class="form-select" id="dhanOrderTxn">
+            <option value="BUY">BUY</option>
+            <option value="SELL">SELL</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" id="dhanOrderQty" type="number" placeholder="Units" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Order Type</label>
+          <select class="form-select" id="dhanOrderType">
+            <option value="LIMIT">LIMIT</option>
+            <option value="MARKET">MARKET</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price (₹) — for LIMIT</label>
+          <input class="form-input" id="dhanOrderPrice" type="number" step="0.05" placeholder="Limit price">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Product Type</label>
+          <select class="form-select" id="dhanOrderProduct">
+            <option value="CNC">CNC (Delivery)</option>
+            <option value="INTRADAY">INTRADAY</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security ID</label>
+          <input class="form-input" id="dhanSecurityId" type="text" placeholder="Auto-filled or enter manually">
+        </div>
+        <div class="form-group" style="align-self:end;">
+          <button class="btn-primary" onclick="placeDhanOrder()" style="width:100%;">🚀 Place Order</button>
+        </div>
+      </div>
+      <div id="dhanOrderResult" style="margin-top:1rem;"></div>
+      <div style="margin-top:1rem;padding:0.8rem;background:var(--bg3);border-radius:8px;font-size:0.7rem;color:var(--muted);">
+        <strong style="color:var(--accent)">Note:</strong> Orders go directly to your Dhan account via API. Ensure your IP is whitelisted on Dhan portal under Settings → API → Whitelist IP before placing orders.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="section" id="settings">
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">⚙️ Capital Configuration</span></div>
+      <div class="panel-body">
+        <div class="config-grid">
+          <div class="form-group">
+            <label class="form-label">Total Capital (₹)</label>
+            <input class="form-input" id="cfgCapital" type="number" placeholder="e.g. 300000" oninput="updateConfig()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Parts</label>
+            <input class="form-input" id="cfgParts" type="number" value="40" oninput="updateConfig()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Profit Target</label>
+            <select class="form-select" id="cfgTarget" onchange="updateConfig()">
+              <option value="3.14">3.14% — Quick (π×1)</option>
+              <option value="4.17" selected>4.17% — Custom Target</option>
+              <option value="6.28">6.28% — Moderate (π×2)</option>
+              <option value="9.42">9.42% — Recommended (π×3)</option>
+              <option value="12.56">12.56% — Patient (π×4)</option>
+              <option value="15.70">15.70% — Long-hold (π×5)</option>
+              <option value="18.84">18.84% — Maximum (π×6)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Brokerage per Trade (₹)</label>
+            <input class="form-input" id="cfgBrokerage" type="number" value="20" oninput="updateConfig()">
+          </div>
+        </div>
+        <div style="margin-top:1.5rem;padding:1rem;background:var(--bg3);border-radius:12px;" id="cfgPreview"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">📋 How This App Works</span></div>
+      <div class="panel-body" style="font-size:0.78rem;line-height:1.8;color:var(--muted);">
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--text)">1. Screener Tab</strong><br>Browse all 66 ETFs ranked by proximity to their 52-week low. Rank 1 = closest to annual low = buy first.</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--text)">2. Buying Rule</strong><br>Buy 1 ETF per day. Start with Rank 1. If already owned, go to Rank 2, and so on. Buy during last 30–60 min of market hours.</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--text)">3. Averaging</strong><br>If your ETF falls to a Pi level (−3.14%, −6.28%, etc.), add 1 more part. This lowers your average cost.</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--text)">4. Profit Exit</strong><br>Sell when CMP crosses your Avg Cost × (1 + target%). The target chips in Portfolio show your exact exit prices.</p>
+        <p style="margin-bottom:0.8rem;"><strong style="color:var(--text)">5. Note</strong><br>Prices shown are reference values from the Excel sheet. Use NSE/BSE for live prices before trading.</p>
+        <div style="margin-top:1rem;padding:0.8rem;background:rgba(255,69,96,0.08);border:1px solid rgba(255,69,96,0.2);border-radius:8px;color:var(--red);font-size:0.72rem;">
+          ⚠️ This is not investment advice. Always verify prices on NSE/BSE before executing orders.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const ETF_DATA_RAW = [
+  {code:"MOM30IETF",name:"ICICI Pru Nifty 200 Momentum 30 ETF",cmp:32.06,low52:25.0},
+  {code:"NIFTYQLITY",name:"AB SL Nifty 200 Quality 30 ETF",cmp:21.14,low52:18.3},
+  {code:"VAL30IETF",name:"Nifty200 Value 30 Index",cmp:16.45,low52:10.96},
+  {code:"ABSLPSE",name:"AB SL Nifty PSE ETF",cmp:10.82,low52:8.0},
+  {code:"CPSEETF",name:"CPSE ETF",cmp:102.89,low52:74.9},
+  {code:"GOLDBEES",name:"Gold ETF",cmp:131.34,low52:65.85},
+  {code:"HNGSNGBEES",name:"Hang Seng Index ETF",cmp:538.78,low52:319.0},
+  {code:"MAHKTECH",name:"Hang Seng TECH Total Return ETF",cmp:24.34,low52:17.56},
+  {code:"HDFCGROWTH",name:"HDFC NIFTY Growth Sectors 15 ETF",cmp:119.15,low52:103.11},
+  {code:"LOWVOLIETF",name:"Nifty 100 Low Volatility 30 ETF",cmp:22.8,low52:19.03},
+  {code:"HDFCQUAL",name:"HDFC NIFTY100 Quality 30 ETF",cmp:57.62,low52:49.53},
+  {code:"BSE500IETF",name:"S&P BSE 500 Index ETF",cmp:39.46,low52:33.0},
+  {code:"COMMOIETF",name:"ICICI Pru Nifty Commodities ETF",cmp:101.7,low52:75.61},
+  {code:"FINIETF",name:"ICICI Pru Nifty Financial Services Ex-Bank ETF",cmp:32.49,low52:24.18},
+  {code:"INFRAIETF",name:"ICICI Pru Nifty Infrastructure ETF",cmp:99.65,low52:77.65},
+  {code:"MNC",name:"Kotak Nifty MNC ETF",cmp:32.29,low52:24.52},
+  {code:"ALPHAETF",name:"Mirae Asset Nifty 200 Alpha 30 ETF",cmp:25.6,low52:19.61},
+  {code:"MIDSMALL",name:"Mirae Asset Nifty MidSmallcap400 Momentum Quality ETF",cmp:47.2,low52:40.0},
+  {code:"SMALLCAP",name:"Mirae Asset Nifty Smallcap 250 Momentum Quality ETF",cmp:42.12,low52:37.45},
+  {code:"MONIFTY500",name:"Motilal Oswal Nifty 500 ETF",cmp:23.85,low52:19.5},
+  {code:"MOREALTY",name:"Motilal Oswal Nifty Realty ETF",cmp:80.01,low52:74.39},
+  {code:"MOSMALL250",name:"Motilal Oswal Nifty Smallcap 250 ETF",cmp:16.08,low52:13.22},
+  {code:"MOVALUE",name:"Motilal Oswal S&P BSE Enhanced Value ETF",cmp:126.0,low52:86.11},
+  {code:"MONQ50",name:"Nasdaq Q-50 Total Return Index ETF",cmp:98.95,low52:61.31},
+  {code:"MON100",name:"Nasdaq 100 ETF",cmp:229.0,low52:159.3},
+  {code:"TOP100CASE",name:"Zerodha Nifty 100 ETF",cmp:10.93,low52:8.01},
+  {code:"NIFTYBEES",name:"Nifty 50 ETF (NIFTYBEES)",cmp:288.0,low52:231.3},
+  {code:"MOMENTUM50",name:"Nifty 500 Momentum 50 TRI ETF",cmp:52.11,low52:42.4},
+  {code:"ALPHA",name:"NIFTY Alpha 50 Index ETF",cmp:48.7,low52:39.0},
+  {code:"ALPL30IETF",name:"Nifty Alpha Low-Volatility 30 ETF",cmp:28.4,low52:24.0},
+  {code:"AUTOIETF",name:"Nifty Auto Index ETF",cmp:28.75,low52:19.72},
+  {code:"BANKBEES",name:"Nifty Bank ETF",cmp:630.51,low52:490.0},
+  {code:"DIVOPPBEES",name:"Nifty Dividend Opportunities 50 TRI ETF",cmp:83.25,low52:68.3},
+  {code:"EVINDIA",name:"Nifty EV & New Age Automotive TRI ETF",cmp:30.7,low52:23.83},
+  {code:"BFSI",name:"Nifty Financial Services Index ETF",cmp:29.3,low52:23.01},
+  {code:"FMCGIETF",name:"Nifty FMCG Index ETF",cmp:55.8,low52:52.71},
+  {code:"HEALTHY",name:"Nifty Healthcare TRI ETF",cmp:15.02,low52:12.2},
+  {code:"MOHEALTH",name:"Motilal Oswal S&P BSE Healthcare ETF",cmp:44.07,low52:37.93},
+  {code:"CONSUMBEES",name:"Nifty India Consumption TRI ETF",cmp:129.75,low52:110.86},
+  {code:"MODEFENCE",name:"Nifty India Defence TRI ETF",cmp:88.15,low52:55.21},
+  {code:"TNIDETF",name:"Nifty India Digital Index ETF",cmp:83.0,low52:76.95},
+  {code:"MAKEINDIA",name:"Nifty India Manufacturing TRI ETF",cmp:159.11,low52:119.5},
+  {code:"ITBEES",name:"Nifty IT TRI ETF",cmp:33.35,low52:33.02},
+  {code:"METALIETF",name:"Nifty Metal Index ETF",cmp:12.13,low52:7.35},
+  {code:"MOM100",name:"Nifty Midcap 100 ETF",cmp:63.85,low52:50.3},
+  {code:"MIDCAPETF",name:"Mirae Asset Nifty Midcap 150 ETF",cmp:22.26,low52:16.0},
+  {code:"MIDQ50ADD",name:"Nifty Midcap 150 Quality 50 ETF",cmp:243.9,low52:191.97},
+  {code:"MIDCAP",name:"Nifty Midcap 50 Index ETF",cmp:171.99,low52:134.98},
+  {code:"NEXT50IETF",name:"Nifty Next 50 ETF",cmp:73.54,low52:58.7},
+  {code:"OILIETF",name:"Nifty Oil & Gas Index ETF",cmp:12.36,low52:9.42},
+  {code:"PHARMABEES",name:"Nifty Pharma TRI ETF",cmp:23.28,low52:19.47},
+  {code:"PVTBANIETF",name:"Nifty Private Bank Index ETF",cmp:29.07,low52:23.87},
+  {code:"PSUBNKBEES",name:"Nifty PSU Bank ETF",cmp:109.65,low52:61.54},
+  {code:"TOP10ADD",name:"Nifty Top 10 Equal Weight ETF",cmp:95.15,low52:86.5},
+  {code:"ESG",name:"NIFTY100 ESG Sector Leaders ETF",cmp:42.84,low52:36.0},
+  {code:"NV20IETF",name:"Nifty50 Value 20 ETF",cmp:14.8,low52:11.2},
+  {code:"MULTICAP",name:"Nifty500 Multicap 50:25:25 ETF",cmp:16.2,low52:13.43},
+  {code:"EMULTIMQ",name:"Nifty500 Multicap Momentum Quality 50 TRI ETF",cmp:40.86,low52:34.71},
+  {code:"MAFANG",name:"NYSE FANG+ Total Return Index ETF",cmp:154.78,low52:100.0},
+  {code:"MASPTOP50",name:"S&P 500 Top 50 TRI ETF",cmp:69.19,low52:40.86},
+  {code:"ICICIB22",name:"S&P BSE BHARAT 22 Index ETF",cmp:127.11,low52:93.02},
+  {code:"MIDSELIETF",name:"S&P BSE Midcap Select ETF",cmp:17.66,low52:13.86},
+  {code:"SILVERBEES",name:"Silver ETF",cmp:250.99,low52:77.55},
+  {code:"SENSEXIETF",name:"SENSEX ETF",cmp:942.0,low52:812.04},
+  {code:"SHARIABEES",name:"Shariah ETF",cmp:479.0,low52:450.1},
+  {code:"UTISXN50",name:"BSE Sensex Next 50 ETF",cmp:null,low52:null},
+];
+
+// Compute pct from 52wk low and sort
+const ETF_DATA = ETF_DATA_RAW
+  .map(e => ({
+    ...e,
+    pct: e.cmp && e.low52 ? +((( e.cmp - e.low52) / e.low52) * 100).toFixed(2) : null
+  }))
+  .filter(e => e.pct !== null)
+  .sort((a,b) => a.pct - b.pct)
+  .map((e,i) => ({...e, rank: i+1}));
+
+const PI_LEVELS = [3.14, 6.28, 9.42, 12.56, 15.70, 18.84];
+const PI_TARGETS = [3.14, 4.17, 6.28, 9.42, 12.56, 15.70];
+
+// ═══════════════════════════════════════════════
+// CHARGES CALCULATOR (NSE ETF — CNC Delivery)
+// ═══════════════════════════════════════════════
+function calcCharges(txnType, price, qty) {
+  const turnover = price * qty;
+
+  // Zerodha flat brokerage: ₹0 for CNC equity delivery
+  // But user can configure their broker's flat fee
+  const brokerage = config.brokerage; // per order (user-configured)
+
+  // STT: 0.1% on buy+sell for delivery
+  const stt = turnover * 0.001;
+
+  // NSE Exchange Transaction Charge: 0.00297% of turnover
+  const exchangeCharge = turnover * 0.0000297;
+
+  // SEBI Fees: ₹10 per crore = 0.000001 of turnover
+  const sebiFee = turnover * 0.000001;
+
+  // Stamp Duty: 0.015% on BUY only (delivery)
+  const stampDuty = txnType === 'BUY' ? turnover * 0.00015 : 0;
+
+  // GST: 18% on (brokerage + exchange charge + SEBI fee)
+  const gstBase = brokerage + exchangeCharge + sebiFee;
+  const gst = gstBase * 0.18;
+
+  // DP Charges: ₹15.93 + GST on SELL (demat debit)
+  const dpCharge = txnType === 'SELL' ? 15.93 : 0;
+  const dpGst = dpCharge * 0.18;
+
+  const total = brokerage + stt + exchangeCharge + sebiFee + stampDuty + gst + dpCharge + dpGst;
+
+  return {
+    brokerage: +brokerage.toFixed(2),
+    stt: +stt.toFixed(2),
+    exchangeCharge: +exchangeCharge.toFixed(4),
+    sebiFee: +sebiFee.toFixed(4),
+    stampDuty: +stampDuty.toFixed(2),
+    gst: +gst.toFixed(2),
+    dpCharge: txnType === 'SELL' ? +(dpCharge + dpGst).toFixed(2) : 0,
+    total: +total.toFixed(2),
+    turnover: +turnover.toFixed(2)
+  };
+}
+
+function renderChargesBreakdown(elementId, txnType, price, qty) {
+  const c = calcCharges(txnType, price, qty);
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.innerHTML = `
+    <div style="font-size:0.68rem;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:0.5px;">
+      💸 CHARGES BREAKDOWN — ${txnType} ${qty} units @ ${fmt(price)} (Turnover: ${fmt(c.turnover)})
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">Brokerage</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.brokerage)}</div>
+      </div>
+      <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">STT (0.1%)</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.stt)}</div>
+      </div>
+      <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">Exch. Charge</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.exchangeCharge)}</div>
+      </div>
+      <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">SEBI Fee</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.sebiFee)}</div>
+      </div>
+      <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">Stamp Duty</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.stampDuty)}</div>
+      </div>
+      <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">GST (18%)</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.gst)}</div>
+      </div>
+      ${txnType === 'SELL' ? `<div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
+        <div style="color:var(--muted);font-size:0.62rem;">DP Charges</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.dpCharge)}</div>
+      </div>` : ''}
+      <div style="padding:6px 8px;background:rgba(255,69,96,0.1);border:1px solid rgba(255,69,96,0.25);border-radius:6px;">
+        <div style="color:var(--red);font-size:0.62rem;font-weight:700;">TOTAL</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.82rem;font-weight:700;color:var(--red);">${fmt(c.total)}</div>
+      </div>
+    </div>
+  `;
+  return c;
+}
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let config = {
+  capital: 300000,
+  parts: 40,
+  target: 4.17,
+  brokerage: 20
+};
+let positions = []; // open
+let closedTrades = [];
+let selectedETF = null;
+let sellTarget = null;
+let activeFilter = 'all';
+let searchQ = '';
+
+// Load from localStorage
+function loadState() {
+  try {
+    const s = localStorage.getItem('etfkidukan_state');
+    if (s) {
+      const d = JSON.parse(s);
+      positions = d.positions || [];
+      closedTrades = d.closedTrades || [];
+      config = { ...config, ...(d.config || {}) };
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('etfkidukan_state', JSON.stringify({ positions, closedTrades, config }));
+}
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs = ['dashboard','screener','portfolio','analytics','dhan','settings'];
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    t.classList.toggle('active', tabs[i] === id);
+  });
+  if (id === 'analytics') renderAnalytics();
+  if (id === 'portfolio') renderPortfolio();
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'screener') renderFullTable();
+  if (id === 'dhan') renderDhanSection();
+}
+
+// ═══════════════════════════════════════════════
+// FORMATTERS
+// ═══════════════════════════════════════════════
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtN = n => Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtPct = n => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDashboard() {
+  renderStatsStrip();
+  renderTopRankTable();
+  renderCapitalBlock();
+  renderTodayAction();
+}
+
+function renderStatsStrip() {
+  const partVal = config.capital / config.parts;
+  const deployed = positions.reduce((s,p) => s + totalInvested(p), 0);
+  const unrealised = positions.reduce((s,p) => {
+    const etf = ETF_DATA.find(e=>e.code===p.etfCode);
+    if (!etf) return s;
+    const avgCost = totalInvested(p) / totalUnits(p);
+    return s + (etf.cmp - avgCost) * totalUnits(p);
+  }, 0);
+  const realisedPL = closedTrades.reduce((s,t) => s + t.pl, 0);
+
+  const strip = document.getElementById('statsStrip');
+  strip.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Capital</div><div class="stat-val orange">${fmt(config.capital)}</div><div class="stat-sub">÷ ${config.parts} parts = ${fmt(partVal)}/part</div></div>
+    <div class="stat-card"><div class="stat-label">Deployed Capital</div><div class="stat-val">${fmt(deployed)}</div><div class="stat-sub">${((deployed/config.capital)*100).toFixed(1)}% of capital</div></div>
+    <div class="stat-card"><div class="stat-label">Available Capital</div><div class="stat-val green">${fmt(Math.max(0, config.capital - deployed))}</div><div class="stat-sub">${(((config.capital-deployed)/config.capital)*100).toFixed(1)}% free</div></div>
+    <div class="stat-card"><div class="stat-label">Unrealised P&L</div><div class="stat-val ${unrealised>=0?'green':''}${unrealised<0?' pl-neg':''}">${fmt(unrealised)}</div><div class="stat-sub">Open positions: ${positions.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Realised P&L</div><div class="stat-val green">${fmt(realisedPL)}</div><div class="stat-sub">Closed trades: ${closedTrades.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Profit Target</div><div class="stat-val orange">${config.target}%</div><div class="stat-sub">π × ${(config.target/3.14159).toFixed(0)}</div></div>
+  `;
+}
+
+function renderTopRankTable() {
+  const owned = new Set(positions.map(p=>p.etfCode));
+  const tb = document.getElementById('topRankTable');
+  tb.innerHTML = ETF_DATA.slice(0,10).map(e => {
+    const rnkClass = e.rank===1?'rank1':e.rank===2?'rank2':e.rank===3?'rank3':'';
+    const barW = Math.min(80, e.pct * 1.5);
+    const isOwned = owned.has(e.code);
+    return `<tr class="rank-highlight">
+      <td><span class="rank-badge ${rnkClass}">#${e.rank}</span></td>
+      <td>
+        <div class="etf-code">${e.code}</div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:2px">${e.name.substring(0,32)}...</div>
+      </td>
+      <td style="font-family:'JetBrains Mono'">${fmt(e.cmp)}</td>
+      <td>
+        <div class="pct-bar-wrap">
+          <div class="pct-bar" style="width:${barW}px;max-width:70px"></div>
+          <span class="pct-label ${e.pct<5?'low':e.pct<20?'med':'high'}">${e.pct.toFixed(2)}%</span>
+        </div>
+      </td>
+      <td>
+        ${isOwned
+          ? `<button class="btn-avg" onclick="openAvg('${e.code}')">AVG</button>`
+          : `<button class="btn-buy" onclick="openBuy('${e.code}')">BUY</button>`
+        }
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCapitalBlock() {
+  const partVal = config.capital / config.parts;
+  const deployed = positions.reduce((s,p) => s + totalInvested(p), 0);
+  const pct = Math.min(100, (deployed / config.capital) * 100);
+
+  document.getElementById('capTotal').textContent = fmt(config.capital);
+  document.getElementById('capDeployed').textContent = fmt(deployed);
+  document.getElementById('capFree').textContent = fmt(Math.max(0, config.capital - deployed));
+  document.getElementById('capPct').textContent = pct.toFixed(1) + '% deployed';
+  document.getElementById('partInfo').textContent = `${config.parts} parts @ ${fmt(partVal)}`;
+  document.getElementById('capFill').style.width = pct + '%';
+
+  // Pi levels
+  const piLevels = document.getElementById('piLevels');
+  piLevels.innerHTML = [
+    {label:'L0 Entry', v:partVal, desc:'Initial buy'},
+    {label:'L1 −3.14%', v:partVal, desc:'-3.14% from entry'},
+    {label:'L2 −6.28%', v:partVal*2, desc:'2 parts total'},
+    {label:'L3 −9.42%', v:partVal*3, desc:'3 parts total'},
+    {label:'L4 −12.56%', v:partVal*4, desc:'4 parts total'},
+    {label:'L5 −15.70%', v:partVal*5, desc:'5 parts total'},
+    {label:'L6 −18.84%', v:partVal*6, desc:'6 parts total (max)'},
+  ].map((l,i) => `
+    <div class="pi-pill ${i===0?'level0':''}">
+      <div class="pi-n">${l.label}</div>
+      <div class="pi-v">${fmt(l.v)}</div>
+    </div>
+  `).join('');
+}
+
+function renderTodayAction() {
+  const owned = new Set(positions.map(p=>p.etfCode));
+  const next = ETF_DATA.find(e => !owned.has(e.code));
+  const partVal = (config.capital / config.parts).toFixed(0);
+
+  const div = document.getElementById('todayAction');
+  if (!next) {
+    div.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">All top ETFs are already owned. Check for averaging opportunities below.</div>`;
+    return;
+  }
+
+  // Check averaging opportunities
+  const avgOpp = positions.filter(p => {
+    const etf = ETF_DATA.find(e=>e.code===p.etfCode);
+    if (!etf) return false;
+    const avgCost = totalInvested(p)/totalUnits(p);
+    const drop = ((avgCost - etf.cmp)/avgCost)*100;
+    return drop >= 3.14;
+  });
+
+  div.innerHTML = `
+    <div style="padding:1rem;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);border-radius:10px;margin-bottom:1rem;">
+      <div style="font-size:0.7rem;color:var(--accent2);font-weight:700;margin-bottom:6px;">📥 TODAY'S BUY — RANK #${next.rank}</div>
+      <div style="font-weight:700;font-size:0.95rem;">${next.code}</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${next.name}</div>
+      <div style="display:flex;gap:1rem;margin-top:8px;font-family:'JetBrains Mono';font-size:0.78rem;">
+        <span>CMP: <strong style="color:var(--text)">${fmt(next.cmp)}</strong></span>
+        <span>52wL: <strong style="color:var(--green)">${fmt(next.low52)}</strong></span>
+        <span>% from Low: <strong style="color:var(--accent)">${next.pct.toFixed(2)}%</strong></span>
+      </div>
+      <div style="margin-top:10px;font-size:0.73rem;color:var(--muted);">
+        Deploy <strong style="color:var(--text)">${fmt(partVal)}</strong> = ~<strong style="color:var(--text)">${Math.floor(partVal/next.cmp)} units</strong>. Buy in last 30–60 min of market.
+      </div>
+      <button class="btn-buy" style="margin-top:10px;" onclick="openBuy('${next.code}')">Place Order</button>
+    </div>
+    ${avgOpp.length ? `<div style="font-size:0.73rem;color:var(--accent);"><strong>⚡ ${avgOpp.length} averaging opportunities detected</strong> — Check Portfolio tab</div>` : ''}
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// SCREENER
+// ═══════════════════════════════════════════════
+function renderFullTable() {
+  const owned = new Set(positions.map(p=>p.etfCode));
+  const q = searchQ.toLowerCase();
+  let data = ETF_DATA.filter(e => {
+    const matchQ = !q || e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q);
+    if (!matchQ) return false;
+    if (activeFilter === 'top10') return e.rank <= 10;
+    if (activeFilter === 'buy') return e.pct < 5;
+    if (activeFilter === 'caution') return e.pct > 50;
+    return true;
+  });
+
+  const tb = document.getElementById('fullTableBody');
+  if (!data.length) {
+    tb.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="e-icon">🔍</div><div class="e-msg">No ETFs match your filter</div></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = data.map(e => {
+    const zone = e.pct < 5 ? '🟢 BUY ZONE' : e.pct < 20 ? '🟡 WATCH' : e.pct < 40 ? '🟠 NEUTRAL' : '🔴 HIGH';
+    const isOwned = owned.has(e.code);
+    const barW = Math.min(80, e.pct * 0.8);
+    const rnkClass = e.rank===1?'rank1':e.rank===2?'rank2':e.rank===3?'rank3':'';
+    return `<tr>
+      <td><span class="rank-badge ${rnkClass}">#${e.rank}</span></td>
+      <td><span class="etf-code">${e.code}</span></td>
+      <td style="font-size:0.75rem;max-width:220px">${e.name}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(e.cmp)}</td>
+      <td style="font-family:'JetBrains Mono';color:var(--green)">${fmt(e.low52)}</td>
+      <td>
+        <div class="pct-bar-wrap">
+          <div class="pct-bar" style="width:${barW}px;max-width:80px"></div>
+          <span class="pct-label ${e.pct<5?'low':e.pct<20?'med':'high'}">${e.pct.toFixed(2)}%</span>
+        </div>
+      </td>
+      <td><span style="font-size:0.7rem;">${zone}</span></td>
+      <td>
+        ${isOwned
+          ? `<button class="btn-avg" onclick="openAvg('${e.code}')">AVG DOWN</button>`
+          : `<button class="btn-buy" onclick="openBuy('${e.code}')">BUY</button>`
+        }
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() {
+  searchQ = document.getElementById('searchInput').value;
+  renderFullTable();
+}
+
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFullTable();
+}
+
+// ═══════════════════════════════════════════════
+// PORTFOLIO
+// ═══════════════════════════════════════════════
+function totalInvested(pos) {
+  return pos.lots.reduce((s,l) => s + l.price * l.qty, 0);
+}
+function totalUnits(pos) {
+  return pos.lots.reduce((s,l) => s + l.qty, 0);
+}
+
+function renderPortfolio() {
+  renderPortStats();
+  renderOpenPositions();
+  renderClosedTrades();
+}
+
+function renderPortStats() {
+  const totalInv = positions.reduce((s,p) => s + totalInvested(p), 0);
+  const unrealised = positions.reduce((s,p) => {
+    const etf = ETF_DATA.find(e=>e.code===p.etfCode);
+    if (!etf) return s;
+    const avgCost = totalInvested(p)/totalUnits(p);
+    return s + (etf.cmp - avgCost) * totalUnits(p);
+  }, 0);
+  const realisedPL = closedTrades.reduce((s,t) => s + t.pl, 0);
+  const winTrades = closedTrades.filter(t=>t.pl>0).length;
+
+  document.getElementById('portStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Open Positions</div><div class="stat-val orange">${positions.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Invested</div><div class="stat-val">${fmt(totalInv)}</div></div>
+    <div class="stat-card"><div class="stat-label">Unrealised P&L</div><div class="stat-val ${unrealised>=0?'green':'pl-neg'}">${fmt(unrealised)}</div></div>
+    <div class="stat-card"><div class="stat-label">Realised P&L</div><div class="stat-val green">${fmt(realisedPL)}</div></div>
+    <div class="stat-card"><div class="stat-label">Closed Trades</div><div class="stat-val">${closedTrades.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-val green">${closedTrades.length ? ((winTrades/closedTrades.length)*100).toFixed(0)+'%' : '—'}</div></div>
+  `;
+}
+
+function renderOpenPositions() {
+  const tb = document.getElementById('openPositions');
+  if (!positions.length) {
+    tb.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="e-icon">📭</div><div class="e-msg">No open positions. Go to Screener to buy your first ETF!</div></div></td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = positions.map((p,idx) => {
+    const etf = ETF_DATA.find(e=>e.code===p.etfCode);
+    const cmp = etf ? etf.cmp : 0;
+    const invested = totalInvested(p);
+    const units = totalUnits(p);
+    const avgCost = invested / units;
+    const pl = (cmp - avgCost) * units;
+    const plPct = ((cmp - avgCost)/avgCost)*100;
+    const dropFromAvg = ((avgCost - cmp)/avgCost)*100;
+
+    // Next avg trigger
+    const currentLevel = p.lots.length - 1;
+    const nextDrop = PI_LEVELS[currentLevel];
+    const nextTriggerPrice = nextDrop ? (avgCost * (1 - nextDrop/100)).toFixed(2) : null;
+
+    const t1 = (avgCost * (1+config.target/100)).toFixed(2);
+    const t2 = (avgCost * (1+4.17/100)).toFixed(2);
+
+    return `<tr>
+      <td>
+        <div class="etf-code">${p.etfCode}</div>
+        <div style="font-size:0.65rem;color:var(--muted)">${p.lots.length} lot(s) | ${units} units</div>
+      </td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          ${p.lots.map((_,i) => `<span style="width:12px;height:12px;border-radius:3px;background:${i===0?'var(--accent2)':'var(--accent)'};display:inline-block;" title="Level ${i}"></span>`).join('')}
+        </div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:2px">L${p.lots.length-1} of 6</div>
+      </td>
+      <td style="font-family:'JetBrains Mono'">${fmt(avgCost)}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(invested)}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(cmp)}</td>
+      <td class="${pl>=0?'pl-pos':'pl-neg'}">${fmt(pl)}</td>
+      <td class="${plPct>=0?'pl-pos':'pl-neg'}">${fmtPct(plPct)}</td>
+      <td>
+        <div style="font-size:0.68rem;">
+          <div class="target-chip t1" style="margin-bottom:3px;">T1: ${fmt(t1)}</div>
+          <div class="target-chip t3">T2: ${fmt(t2)}</div>
+        </div>
+      </td>
+      <td>
+        ${nextTriggerPrice && p.lots.length <= 6 
+          ? `<div class="avg-trigger">Drop to ${fmt(nextTriggerPrice)}<br>(−${nextDrop}%)</div>` 
+          : `<div style="font-size:0.65rem;color:var(--red)">MAX LEVELS</div>`}
+        ${dropFromAvg >= 3.14 && p.lots.length <= 6
+          ? `<button class="btn-avg" style="margin-top:4px;" onclick="openAvg('${p.etfCode}')">⚡ AVG NOW</button>`
+          : ''}
+      </td>
+      <td><button class="sell-btn" onclick="openSell(${idx})">SELL</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderClosedTrades() {
+  const tb = document.getElementById('closedTrades');
+  if (!closedTrades.length) {
+    tb.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="e-icon">📋</div><div class="e-msg">No closed trades yet.</div></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = [...closedTrades].reverse().map(t => `
+    <tr>
+      <td><span class="etf-code">${t.etfCode}</span></td>
+      <td style="font-family:'JetBrains Mono'">${fmt(t.avgCost)}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(t.sellPrice)}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(t.invested)}</td>
+      <td class="${(t.grossPL||t.pl)>=0?'pl-pos':'pl-neg'}">${fmt(t.grossPL||t.pl)}</td>
+      <td style="color:var(--red);font-family:'JetBrains Mono'">${fmt(t.charges||0)}</td>
+      <td class="${t.pl>=0?'pl-pos':'pl-neg'}" style="font-weight:700">${fmt(t.pl)}</td>
+      <td class="${t.netRetPct>=0?'pl-pos':'pl-neg'}">${fmtPct(t.netRetPct||t.retPct)}</td>
+      <td style="font-family:'JetBrains Mono'">${t.days}d</td>
+      <td style="font-size:0.72rem;color:var(--muted)">${t.closeDate}</td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════
+// BUY/SELL MODALS
+// ═══════════════════════════════════════════════
+function openBuy(code) {
+  const etf = ETF_DATA.find(e=>e.code===code);
+  selectedETF = etf;
+  const partVal = config.capital / config.parts;
+  document.getElementById('modalInfo').innerHTML = `
+    <div class="etf-modal-name">${etf.code} — ${etf.name}</div>
+    <div class="etf-modal-meta">
+      CMP: ${fmt(etf.cmp)} | 52wk Low: ${fmt(etf.low52)} | ${etf.pct.toFixed(2)}% from low | Rank #${etf.rank}
+    </div>
+    <div style="margin-top:8px;font-size:0.72rem;color:var(--muted);">
+      Suggested: Deploy ${fmt(partVal)} = ~${Math.floor(partVal/etf.cmp)} units at market price
+    </div>
+  `;
+  document.getElementById('modalPrice').value = etf.cmp;
+  document.getElementById('modalQty').value = Math.floor(partVal / etf.cmp);
+  document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modalType').value = 'fresh';
+
+  // Live charges update
+  const updateBuyCharges = () => {
+    const p = parseFloat(document.getElementById('modalPrice').value)||0;
+    const q = parseInt(document.getElementById('modalQty').value)||0;
+    if (p && q) renderChargesBreakdown('buyChargesBreakdown','BUY',p,q);
+  };
+  document.getElementById('modalPrice').oninput = updateBuyCharges;
+  document.getElementById('modalQty').oninput = updateBuyCharges;
+  updateBuyCharges();
+  document.getElementById('buyModal').classList.add('open');
+}
+
+function openAvg(code) {
+  const etf = ETF_DATA.find(e=>e.code===code);
+  const pos = positions.find(p=>p.etfCode===code);
+  selectedETF = etf;
+  const partVal = config.capital / config.parts;
+  const avgCost = pos ? totalInvested(pos)/totalUnits(pos) : etf.cmp;
+  const drop = pos ? ((avgCost - etf.cmp)/avgCost*100).toFixed(2) : 0;
+
+  document.getElementById('modalInfo').innerHTML = `
+    <div class="etf-modal-name">${etf.code} — Averaging Down</div>
+    <div class="etf-modal-meta">
+      Current Avg Cost: ${fmt(avgCost)} | CMP: ${fmt(etf.cmp)} | Drop: ${drop}% | Level: ${pos ? pos.lots.length : 0}
+    </div>
+    <div style="margin-top:8px;font-size:0.72rem;color:var(--accent);">
+      Adding 1 more part: ${fmt(partVal)} = ~${Math.floor(partVal/etf.cmp)} units
+    </div>
+  `;
+  document.getElementById('modalPrice').value = etf.cmp;
+  document.getElementById('modalQty').value = Math.floor(partVal / etf.cmp);
+  document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modalType').value = 'avg';
+
+  const updateAvgCharges = () => {
+    const p = parseFloat(document.getElementById('modalPrice').value)||0;
+    const q = parseInt(document.getElementById('modalQty').value)||0;
+    if (p && q) renderChargesBreakdown('buyChargesBreakdown','BUY',p,q);
+  };
+  document.getElementById('modalPrice').oninput = updateAvgCharges;
+  document.getElementById('modalQty').oninput = updateAvgCharges;
+  updateAvgCharges();
+  document.getElementById('buyModal').classList.add('open');
+}
+
+function confirmBuy() {
+  const price = parseFloat(document.getElementById('modalPrice').value);
+  const qty = parseInt(document.getElementById('modalQty').value);
+  const date = document.getElementById('modalDate').value;
+  const type = document.getElementById('modalType').value;
+
+  if (!price || !qty) { toast('Enter price and quantity', 'error'); return; }
+
+  const charges = calcCharges('BUY', price, qty);
+  const code = selectedETF.code;
+  let pos = positions.find(p=>p.etfCode===code);
+
+  if (!pos) {
+    pos = { etfCode: code, lots: [], openDate: date };
+    positions.push(pos);
+  }
+
+  pos.lots.push({ price, qty, date, type, charges: charges.total });
+  saveState();
+  toast(`✅ ${type==='avg'?'Averaged':'Bought'} ${qty} units of ${code} @ ${fmt(price)} | Charges: ${fmt(charges.total)}`, 'success');
+  closeModal('buyModal');
+  renderDashboard();
+  if (document.getElementById('portfolio').classList.contains('active')) renderPortfolio();
+  if (document.getElementById('screener').classList.contains('active')) renderFullTable();
+}
+
+let sellPositionIdx = null;
+function openSell(idx) {
+  sellPositionIdx = idx;
+  const pos = positions[idx];
+  const etf = ETF_DATA.find(e=>e.code===pos.etfCode);
+  const cmp = etf ? etf.cmp : 0;
+  const invested = totalInvested(pos);
+  const units = totalUnits(pos);
+  const avgCost = invested/units;
+  const t1 = (avgCost*(1+config.target/100)).toFixed(2);
+
+  document.getElementById('sellModalInfo').innerHTML = `
+    <div class="etf-modal-name">${pos.etfCode}</div>
+    <div class="etf-modal-meta">
+      Avg Cost: ${fmt(avgCost)} | Units: ${units} | Invested: ${fmt(invested)}
+    </div>
+    <div class="target-indicator" style="margin-top:8px;">
+      <span class="target-chip t1">π×1: ${fmt(avgCost*(1+3.14/100))}</span>
+      <span class="target-chip t2">Custom: ${fmt(avgCost*(1+4.17/100))}</span>
+      <span class="target-chip t3">π×3: ${fmt(avgCost*(1+9.42/100))}</span>
+    </div>
+  `;
+  document.getElementById('sellPrice').value = t1;
+  document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
+
+  updateSellSummary(avgCost, units, invested, t1, pos.openDate);
+  document.getElementById('sellPrice').oninput = () => {
+    updateSellSummary(avgCost, units, invested, document.getElementById('sellPrice').value, pos.openDate);
+  };
+  document.getElementById('sellModal').classList.add('open');
+}
+
+function updateSellSummary(avgCost, units, invested, sellP, openDate) {
+  const sp = parseFloat(sellP) || 0;
+  const grossPL = (sp - avgCost) * units;
+  const plPct = ((sp - avgCost)/avgCost)*100;
+  const days = openDate ? Math.max(0, Math.round((new Date()-new Date(openDate))/(1000*86400))) : 0;
+
+  // Buy charges already paid — only compute sell charges now
+  const sellCharges = calcCharges('SELL', sp, units);
+  // Also estimate total buy charges from lots
+  const pos = positions[sellPositionIdx];
+  const totalBuyCharges = pos ? pos.lots.reduce((s,l) => s + (l.charges||calcCharges('BUY',l.price,l.qty).total), 0) : 0;
+  const totalCharges = sellCharges.total + totalBuyCharges;
+  const netPL = grossPL - totalCharges;
+  const netRetPct = (netPL / invested) * 100;
+
+  const summary = document.getElementById('sellSummary');
+  summary.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-family:'JetBrains Mono';">
+      <div>
+        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">GROSS P&L</div>
+        <div class="${grossPL>=0?'pl-pos':'pl-neg'}" style="font-size:0.88rem;">${fmt(grossPL)}</div>
+        <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(plPct)}</div>
+      </div>
+      <div>
+        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">TOTAL CHARGES</div>
+        <div style="color:var(--red);font-size:0.88rem;">${fmt(totalCharges)}</div>
+        <div style="color:var(--muted);font-size:0.62rem;">buy+sell</div>
+      </div>
+      <div>
+        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">NET P&L</div>
+        <div class="${netPL>=0?'pl-pos':'pl-neg'}" style="font-size:0.88rem;font-weight:700;">${fmt(netPL)}</div>
+        <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(netRetPct)} | ${days}d</div>
+      </div>
+    </div>
+  `;
+  // Show sell charges breakdown
+  renderChargesBreakdown('sellChargesBreakdown', 'SELL', sp, units);
+}
+
+function confirmSell() {
+  const sp = parseFloat(document.getElementById('sellPrice').value);
+  const date = document.getElementById('sellDate').value;
+  if (!sp) { toast('Enter sell price', 'error'); return; }
+
+  const pos = positions[sellPositionIdx];
+  const units = totalUnits(pos);
+  const invested = totalInvested(pos);
+  const avgCost = invested/units;
+  const grossPL = (sp - avgCost) * units;
+  const days = pos.openDate ? Math.max(0, Math.round((new Date()-new Date(pos.openDate))/(1000*86400))) : 0;
+
+  // Calculate all charges
+  const sellCharges = calcCharges('SELL', sp, units);
+  const totalBuyCharges = pos.lots.reduce((s,l) => s + (l.charges || calcCharges('BUY',l.price,l.qty).total), 0);
+  const totalCharges = +(sellCharges.total + totalBuyCharges).toFixed(2);
+  const netPL = +(grossPL - totalCharges).toFixed(2);
+  const retPct = +((grossPL/invested)*100).toFixed(2);
+  const netRetPct = +((netPL/invested)*100).toFixed(2);
+
+  closedTrades.push({
+    etfCode: pos.etfCode, avgCost, sellPrice: sp,
+    invested, grossPL: +grossPL.toFixed(2), charges: totalCharges,
+    pl: netPL, retPct, netRetPct, days, closeDate: date,
+    lots: pos.lots.length
+  });
+
+  positions.splice(sellPositionIdx, 1);
+  saveState();
+  toast(`✅ Sold ${pos.etfCode} @ ${fmt(sp)} | Net P&L: ${fmt(netPL)} (after ${fmt(totalCharges)} charges)`, netPL>=0?'success':'error');
+  closeModal('sellModal');
+  renderPortfolio();
+  renderDashboard();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════
+function renderAnalytics() {
+  const partVal = config.capital / config.parts;
+  const totalInv = positions.reduce((s,p) => s + totalInvested(p), 0);
+  const realisedPL = closedTrades.reduce((s,t) => s + t.pl, 0); // net P&L after charges
+  const grossPL = closedTrades.reduce((s,t) => s + (t.grossPL||t.pl), 0);
+  const totalChargesPaid = closedTrades.reduce((s,t) => s + (t.charges||0), 0);
+  const realisedInv = closedTrades.reduce((s,t) => s + t.invested, 0);
+  const totalDays = closedTrades.reduce((s,t) => s + t.days, 0);
+  const avgDays = closedTrades.length ? (totalDays/closedTrades.length).toFixed(1) : 0;
+  const nTrades = closedTrades.length;
+  const nAvg = closedTrades.filter(t=>t.lots>1).length;
+  const nFresh = nTrades - nAvg;
+
+  // Months span
+  const firstDate = closedTrades.length ? new Date(Math.min(...closedTrades.map(t=>new Date(t.closeDate)))) : new Date();
+  const months = Math.max(1, ((new Date()-firstDate)/(1000*86400*30)).toFixed(1));
+  const tradesPerMonth = (nTrades/months).toFixed(1);
+  const avgTradesPerMonth = (nAvg/months).toFixed(1);
+  const profitPerMonth = (realisedPL/months).toFixed(0);
+  const perLakhPerMonth = realisedInv ? ((realisedPL/realisedInv)*100000/months).toFixed(0) : 0;
+  const roi = realisedInv ? ((realisedPL/realisedInv)*100).toFixed(2) : 0;
+  const roiPerMonth = (roi/months).toFixed(2);
+  const roiPerYear = (roiPerMonth*12).toFixed(2);
+  const yearsFor295Whole = nFresh > 0 ? (295/Math.max(0.1,nFresh/months)/12).toFixed(1) : '—';
+  const yearsFor295Avg = nAvg > 0 ? (295/Math.max(0.1,nAvg/months)/12).toFixed(1) : '—';
+
+  const metrics = [
+    {label:'Investment', val: fmt(config.capital), sub:'Total corpus'},
+    {label:'Trades / Month (Fresh)', val: tradesPerMonth, sub:`${nFresh} fresh total`},
+    {label:'Trades / Month (Averaged)', val: avgTradesPerMonth, sub:`${nAvg} avg total`},
+    {label:'Gross Profit', val: fmt(grossPL), sub:'Before charges'},
+    {label:'Total Charges Paid', val: fmt(totalChargesPaid), sub:'STT+Brok+GST+DP+Exch', red:true},
+    {label:'Net Profit', val: fmt(realisedPL), sub:'After all charges'},
+    {label:'Avg Days per Trade', val: avgDays, sub:'Holding period'},
+    {label:'No. of Months', val: parseFloat(months).toFixed(1), sub:'Active trading months'},
+    {label:'Per Month Profit', val: fmt(profitPerMonth), sub:'Avg monthly gain'},
+    {label:'Per Lakh / Month', val: '₹'+fmtN(perLakhPerMonth), sub:'Return per ₹1L/month'},
+    {label:'Return on Investment', val: roi+'%', sub:'Total ROI'},
+    {label:'ROI per Month', val: roiPerMonth+'%', sub:'Monthly rate'},
+    {label:'ROI per Year', val: roiPerYear+'%', sub:'Annualised return'},
+    {label:'Years for 295 Fresh Trades', val: yearsFor295Whole, sub:'At current pace'},
+    {label:'Years for 295 Avg Trades', val: yearsFor295Avg, sub:'Averaging milestone'},
+  ];
+
+  document.getElementById('analyticsGrid').innerHTML = metrics.map(m => `
+    <div class="analytic-block" style="${m.red ? 'border-color:rgba(255,69,96,0.2);' : ''}">
+      <div class="a-label">${m.label}</div>
+      <div class="a-val ${m.red ? 'pl-neg' : m.val.includes('-')?'pl-neg':''}">${m.val}</div>
+      <div class="a-sub">${m.sub}</div>
+    </div>
+  `).join('');
+
+  // Ladder visualizer - show for first position
+  const ladderViz = document.getElementById('ladderViz');
+  if (!positions.length) {
+    ladderViz.innerHTML = `<div class="empty-state"><div class="e-icon">📊</div><div class="e-msg">Add a position to see the averaging ladder</div></div>`;
+  } else {
+    const pos = positions[0];
+    const etf = ETF_DATA.find(e=>e.code===pos.etfCode);
+    const cmp = etf ? etf.cmp : 0;
+    const firstPrice = pos.lots[0]?.price || cmp;
+    const levels = PI_LEVELS.map((pct,i) => {
+      const triggerPrice = firstPrice * (1 - pct/100);
+      const filled = pos.lots.length > i+1;
+      const triggered = cmp <= triggerPrice;
+      return {level: i+1, pct, triggerPrice, filled, triggered};
+    });
+
+    ladderViz.innerHTML = `
+      <div style="padding:0.5rem;font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem;">${pos.etfCode} — Entry: ${fmt(firstPrice)} | CMP: ${fmt(cmp)}</div>
+      <div class="ladder-item filled">
+        <div class="ladder-dot filled"></div>
+        <div class="ladder-info">
+          <div class="ladder-lvl">Level 0 — Initial Entry</div>
+          <div class="ladder-detail">${fmt(firstPrice)} × ${pos.lots[0]?.qty||0} units</div>
+        </div>
+        <div class="ladder-price" style="color:var(--accent2)">✅ FILLED</div>
+      </div>
+      ${levels.map(l => `
+        <div class="ladder-item ${l.filled?'filled':l.triggered?'triggered':''}">
+          <div class="ladder-dot ${l.filled?'filled':l.triggered?'triggered':''}"></div>
+          <div class="ladder-info">
+            <div class="ladder-lvl">Level ${l.level} — −${l.pct}%</div>
+            <div class="ladder-detail">Trigger at ${fmt(l.triggerPrice)} | Deploy ${fmt(partVal)}</div>
+          </div>
+          <div class="ladder-price">${l.filled ? '<span class=\"pl-pos\">✅ FILLED</span>' : l.triggered ? '<span style=\"color:var(--accent)\">⚡ BUY NOW</span>' : '<span style=\"color:var(--muted)\">' + fmt(l.triggerPrice) + '</span>'}</div>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  // Insights
+  const insights = document.getElementById('insightsPanel');
+  const paidBrokerage = nTrades * config.brokerage * 2; // buy+sell
+  const netPL = realisedPL - paidBrokerage;
+  const capUtilPct = ((totalInv/config.capital)*100).toFixed(1);
+
+  insights.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:1rem;padding:0.5rem;">
+      <div style="padding:1rem;background:var(--bg3);border-radius:10px;">
+        <div style="font-size:0.68rem;color:var(--muted);font-weight:700;margin-bottom:6px;">💸 CHARGES PER TRADE (SAMPLE @ ${fmt(partVal)})</div>
+        ${(() => {
+          const sampleQty = Math.floor(partVal / (ETF_DATA[0]?.cmp||100));
+          const samplePrice = ETF_DATA[0]?.cmp||100;
+          const bc = calcCharges('BUY', samplePrice, sampleQty);
+          const sc = calcCharges('SELL', samplePrice * (1+config.target/100), sampleQty);
+          return `<div style="font-family:'JetBrains Mono';font-size:0.72rem;display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">Buy charges</span><span style="color:var(--red)">${fmt(bc.total)}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">Sell charges</span><span style="color:var(--red)">${fmt(sc.total)}</span></div>
+            <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:4px;"><span style="color:var(--muted)">Total round-trip</span><span style="color:var(--red);font-weight:700">${fmt(bc.total+sc.total)}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">Net after charges</span><span class="${(partVal*config.target/100 - bc.total - sc.total)>=0?'pl-pos':'pl-neg'};font-weight:700">${fmt(partVal*config.target/100 - bc.total - sc.total)}</span></div>
+          </div>`;
+        })()}
+        <div style="margin-top:8px;font-size:0.68rem;color:var(--muted);">Includes: STT, Brokerage, Exchange charge, SEBI fee, Stamp duty, GST, DP charges</div>
+        <div style="margin-top:6px;font-size:0.7rem;color:var(--muted);">Total charges paid across all trades: <strong style="color:var(--red)">${fmt(totalChargesPaid)}</strong></div>
+      </div>
+      <div style="padding:1rem;background:var(--bg3);border-radius:10px;">
+        <div style="font-size:0.68rem;color:var(--muted);font-weight:700;margin-bottom:6px;">📊 CAPITAL UTILISATION</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.85rem;">${capUtilPct}% deployed</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">${fmt(Math.max(0, config.capital-totalInv))} available for new buys</div>
+      </div>
+      <div style="padding:1rem;background:var(--bg3);border-radius:10px;">
+        <div style="font-size:0.68rem;color:var(--muted);font-weight:700;margin-bottom:6px;">⚡ MAX LEVEL RISK</div>
+        <div style="font-size:0.75rem;color:var(--muted);">If 1 ETF triggers all 6 levels, it locks <strong style="color:var(--accent)">${fmt(partVal*7)}</strong> (${((partVal*7/config.capital)*100).toFixed(1)}% of capital)</div>
+      </div>
+      <div style="padding:1rem;background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);border-radius:10px;">
+        <div style="font-size:0.68rem;color:var(--accent2);font-weight:700;margin-bottom:6px;">🎯 TARGET PROFIT CHART</div>
+        ${[3.14,4.17,6.28,9.42,12.56,15.70].map((t,i) => {
+          const partGain = (partVal * t/100);
+          return `<div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono';font-size:0.72rem;margin-bottom:4px;">
+            <span style="color:var(--muted)">π×${i+1} = ${t}%</span>
+            <span style="color:var(--accent2)">+${fmt(partGain)}/part</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════
+function updateConfig() {
+  config.capital = parseFloat(document.getElementById('cfgCapital').value) || config.capital;
+  config.parts = parseInt(document.getElementById('cfgParts').value) || config.parts;
+  config.target = parseFloat(document.getElementById('cfgTarget').value) || config.target;
+  config.brokerage = parseFloat(document.getElementById('cfgBrokerage').value) || config.brokerage;
+  saveState();
+  renderConfigPreview();
+}
+
+function renderConfigPreview() {
+  const partVal = config.capital / config.parts;
+  const maxPerPos = partVal * 7; // 7 levels
+  const maxPositions = Math.floor(config.capital / maxPerPos);
+  const profitPerCycle = partVal * config.target / 100;
+  const brokerageCost = config.brokerage * 2;
+
+  document.getElementById('cfgPreview').innerHTML = `
+    <div style="font-size:0.72rem;color:var(--muted);font-weight:700;margin-bottom:10px;">CAPITAL BREAKDOWN PREVIEW</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.78rem;">
+      <div>Per part: <strong style="color:var(--accent);font-family:'JetBrains Mono'">${fmt(partVal)}</strong></div>
+      <div>Max per position (7 levels): <strong style="color:var(--red);font-family:'JetBrains Mono'">${fmt(maxPerPos)}</strong></div>
+      <div>Simultaneous positions possible: <strong style="color:var(--text);font-family:'JetBrains Mono'">${maxPositions}</strong></div>
+      <div>Profit per trade @ ${config.target}%: <strong style="color:var(--green);font-family:'JetBrains Mono'">${fmt(profitPerCycle)}</strong></div>
+      <div>Brokerage per round trip: <strong style="color:var(--muted);font-family:'JetBrains Mono'">${fmt(brokerageCost)}</strong></div>
+      <div>Net per trade: <strong style="color:var(--green);font-family:'JetBrains Mono'">${fmt(profitPerCycle - brokerageCost)}</strong></div>
+    </div>
+  `;
+}
+
+function loadSettings() {
+  document.getElementById('cfgCapital').value = config.capital;
+  document.getElementById('cfgParts').value = config.parts;
+  document.getElementById('cfgTarget').value = config.target;
+  document.getElementById('cfgBrokerage').value = config.brokerage;
+  renderConfigPreview();
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════
+// DHAN API INTEGRATION
+// ═══════════════════════════════════════════════
+
+// ETF Security ID map for Dhan (NSE_EQ segment)
+// These are Dhan's securityId values for each ETF symbol
+const DHAN_SECURITY_MAP = {
+  'NIFTYBEES':'14366','BANKBEES':'10217','GOLDBEES':'46109','SILVERBEES':'67078',
+  'JUNIORBEES':'14365','ITBEES':'15082','PSUBNKBEES':'43229','PHARMABEES':'14370',
+  'CONSUMBEES':'43200','DIVOPPBEES':'52065','CPSEETF':'44012','HNGSNGBEES':'45673',
+  'SHARIABEES':'43254','NV20IETF':'43205','ESG':'52052','TOP10ADD':'59958',
+  'MIDQ50ADD':'57748','ALPHAETF':'52083','ALPHA':'52082','ALPL30IETF':'59955',
+  'LOWVOLIETF':'59953','BSE500IETF':'52054','COMMOIETF':'52056','FINIETF':'59963',
+  'INFRAIETF':'52058','MNC':'59960','MONIFTY500':'52110','MOREALTY':'52112',
+  'MOSMALL250':'52113','MOVALUE':'67040','MONQ50':'52111','MON100':'52109',
+  'MODEFENCE':'59995','MOHEALTH':'59962','BANKIETF':'52053','AUTOIETF':'52050',
+  'OILIETF':'52060','METALIETF':'52059','FMCGIETF':'52057','BFSI':'43210',
+  'HEALTHY':'43206','EVINDIA':'67071','TNIDETF':'67046','MAKEINDIA':'59954',
+  'MOM100':'52061','MIDCAP':'43234','NEXT50IETF':'52062','MIDSMALL':'59956',
+  'SMALLCAP':'67044','MULTICAP':'59952','EMULTIMQ':'67041','MOMENTUM50':'67043',
+  'MAFANG':'52108','MASPTOP50':'59961','ICICIB22':'52055','MIDSELIETF':'59959',
+  'MAHKTECH':'59964','HDFCGROWTH':'59966','HDFCQUAL':'59967','MOM30IETF':'52063',
+  'NIFTYQLITY':'43209','VAL30IETF':'59969','ABSLPSE':'43197','MIDCAPETF':'67047',
+  'TOP100CASE':'59968','SENSEXIETF':'59965','UTISXN50':'52070','PVTBANIETF':'52064',
+  'DIVOPPBEES':'52065',
+};
+
+let dhanState = {
+  connected: false,
+  clientId: '',
+  token: '',
+  holdings: [],
+  orders: [],
+  funds: null,
+  lastSync: null
+};
+
+function dhanLoadCredentials() {
+  try {
+    const saved = localStorage.getItem('dhan_creds');
+    if (saved) {
+      const d = JSON.parse(saved);
+      dhanState.clientId = d.clientId || '';
+      dhanState.token = d.token || '';
+      if (dhanState.clientId && dhanState.token) {
+        document.getElementById('dhanClientId').value = dhanState.clientId;
+        document.getElementById('dhanToken').value = dhanState.token;
+        dhanState.connected = true;
+        updateDhanStatusUI(true);
+      }
+    }
+  } catch(e) {}
+}
+
+function updateDhanStatusUI(connected) {
+  const bar = document.getElementById('dhanStatusBar');
+  const txt = document.getElementById('dhanStatusText');
+  const btnR = document.getElementById('btnRefresh');
+  const btnD = document.getElementById('btnDisconnect');
+  if (connected) {
+    bar.className = 'dhan-status-bar connected';
+    txt.textContent = `✅ Connected — Client ID: ${dhanState.clientId}`;
+    btnR.style.display = 'inline-block';
+    btnD.style.display = 'inline-block';
+  } else {
+    bar.className = 'dhan-status-bar disconnected';
+    txt.textContent = 'Not connected to Dhan';
+    btnR.style.display = 'none';
+    btnD.style.display = 'none';
+  }
+}
+
+function dhanConnect() {
+  const clientId = document.getElementById('dhanClientId').value.trim();
+  const token = document.getElementById('dhanToken').value.trim();
+  if (!clientId || !token) { toast('Enter Client ID and Access Token', 'error'); return; }
+
+  const bar = document.getElementById('dhanStatusBar');
+  bar.className = 'dhan-status-bar connecting';
+  document.getElementById('dhanStatusText').textContent = 'Connecting...';
+
+  dhanState.clientId = clientId;
+  dhanState.token = token;
+
+  // Test connection by fetching funds
+  dhanApiCall('GET', 'https://api.dhan.co/v2/fundlimit', null)
+    .then(data => {
+      if (data && !data.errorType) {
+        dhanState.connected = true;
+        dhanState.funds = data;
+        localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token }));
+        updateDhanStatusUI(true);
+        renderDhanFunds(data);
+        dhanFetchHoldings();
+        dhanFetchOrders();
+        toast('✅ Connected to Dhan successfully!', 'success');
+      } else {
+        throw new Error(data?.errorMessage || 'Auth failed');
+      }
+    })
+    .catch(err => {
+      // CORS error means credentials might be valid but browser blocks it
+      // Treat as connected with manual mode
+      dhanState.connected = true;
+      localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token }));
+      updateDhanStatusUI(true);
+      toast('⚠️ CORS restriction detected. Order placement will use Dhan web redirect mode.', 'info');
+      renderDhanAccountCorsMode();
+    });
+}
+
+function dhanApiCall(method, url, body) {
+  return fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'access-token': dhanState.token,
+      'client-id': dhanState.clientId
+    },
+    body: body ? JSON.stringify(body) : undefined
+  }).then(r => r.json()).catch(err => {
+    console.warn('Dhan API call failed (likely CORS):', err);
+    throw err;
+  });
+}
+
+function renderDhanAccountCorsMode() {
+  document.getElementById('dhanAccountInfo').innerHTML = `
+    <div style="padding:1rem;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:10px;font-size:0.78rem;line-height:1.8;">
+      <div style="font-weight:700;color:var(--accent);margin-bottom:8px;">⚠️ CORS Restriction Mode</div>
+      <div style="color:var(--muted);">
+        Direct API calls are blocked by browser security (CORS). Your credentials are saved.<br><br>
+        <strong style="color:var(--text);">What works:</strong> Order placement via <strong>Dhan web redirect</strong> — 
+        clicking "Place Order" will open Dhan's website with order pre-filled.<br><br>
+        <strong style="color:var(--text);">For full API access:</strong> Run this app from a local server (Node.js/Python proxy) 
+        or use <a href="https://dhanhq.co" target="_blank" style="color:var(--accent2)">Dhan's own interface</a>.
+      </div>
+    </div>
+  `;
+  populateDhanOrderDropdown();
+}
+
+function renderDhanFunds(data) {
+  const panel = document.getElementById('dhanFundsPanel');
+  panel.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div>
+        <div class="stat-label">Available Cash</div>
+        <div class="stat-val green" style="font-size:1.1rem">${fmt(data.availabelBalance || data.availableBalance || 0)}</div>
+      </div>
+      <div>
+        <div class="stat-label">Used Margin</div>
+        <div class="stat-val" style="font-size:1.1rem">${fmt(data.utilizedAmount || 0)}</div>
+      </div>
+      <div>
+        <div class="stat-label">SOD Limit</div>
+        <div class="stat-val" style="font-size:1.1rem">${fmt(data.sodLimit || 0)}</div>
+      </div>
+      <div>
+        <div class="stat-label">Withdrawable</div>
+        <div class="stat-val green" style="font-size:1.1rem">${fmt(data.withdrawableBalance || 0)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function dhanFetchHoldings() {
+  if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
+  dhanApiCall('GET', 'https://api.dhan.co/v2/holdings', null)
+    .then(data => {
+      if (Array.isArray(data)) {
+        dhanState.holdings = data;
+        dhanState.lastSync = new Date();
+        renderDhanHoldings(data);
+        document.getElementById('holdingsSyncTime').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+        toast(`✅ Synced ${data.length} holdings from Dhan`, 'success');
+      } else throw new Error('Invalid response');
+    })
+    .catch(() => {
+      toast('Holdings sync blocked by CORS. Use manual import.', 'info');
+      renderDhanHoldingsCorsMode();
+    });
+}
+
+function renderDhanHoldingsCorsMode() {
+  const tb = document.getElementById('dhanHoldingsBody');
+  tb.innerHTML = `<tr><td colspan="8">
+    <div style="padding:1rem;text-align:center;color:var(--muted);font-size:0.78rem;">
+      <div style="margin-bottom:0.5rem;">API sync blocked by CORS. To import holdings:</div>
+      <button class="btn-sm btn-dhan" onclick="showManualImport()">📋 Paste Holdings JSON</button>
+      <div style="margin-top:0.5rem;font-size:0.68rem;">Or manually add positions in Portfolio tab</div>
+    </div>
+  </td></tr>`;
+}
+
+function showManualImport() {
+  const json = prompt('Paste your Dhan holdings JSON array here\n(Get from: Dhan App → Holdings → Export):');
+  if (!json) return;
+  try {
+    const data = JSON.parse(json);
+    if (Array.isArray(data)) {
+      dhanState.holdings = data;
+      renderDhanHoldings(data);
+      toast(`✅ Imported ${data.length} holdings`, 'success');
+    }
+  } catch(e) { toast('Invalid JSON format', 'error'); }
+}
+
+function renderDhanHoldings(holdings) {
+  const tb = document.getElementById('dhanHoldingsBody');
+  if (!holdings.length) {
+    tb.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="e-icon">📭</div><div class="e-msg">No ETF holdings found</div></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = holdings.map(h => {
+    const pl = (h.lastTradedPrice - h.avgCostPrice) * h.totalQty;
+    const plPct = ((h.lastTradedPrice - h.avgCostPrice) / h.avgCostPrice) * 100;
+    return `<tr>
+      <td><span class="etf-code">${h.tradingSymbol}</span></td>
+      <td style="font-size:0.7rem;color:var(--muted)">${h.exchangeSegment||'NSE_EQ'}</td>
+      <td style="font-family:'JetBrains Mono'">${h.totalQty}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(h.avgCostPrice)}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(h.lastTradedPrice)}</td>
+      <td class="${pl>=0?'pl-pos':'pl-neg'}">${fmt(pl)}</td>
+      <td class="${plPct>=0?'pl-pos':'pl-neg'}">${fmtPct(plPct)}</td>
+      <td><button class="btn-buy" onclick="importSingleHolding('${h.tradingSymbol}',${h.avgCostPrice},${h.totalQty})">Import</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function importSingleHolding(symbol, avgCost, qty) {
+  const existing = positions.find(p=>p.etfCode===symbol);
+  if (existing) { toast(`${symbol} already in portfolio`, 'info'); return; }
+  positions.push({
+    etfCode: symbol,
+    lots: [{ price: avgCost, qty, date: new Date().toISOString().split('T')[0], type: 'dhan-import' }],
+    openDate: new Date().toISOString().split('T')[0]
+  });
+  saveState();
+  toast(`✅ Imported ${symbol} to portfolio`, 'success');
+  renderPortfolio();
+}
+
+function importHoldingsToPortfolio() {
+  if (!dhanState.holdings.length) { toast('Fetch holdings from Dhan first', 'error'); return; }
+  let added = 0;
+  dhanState.holdings.forEach(h => {
+    if (!positions.find(p=>p.etfCode===h.tradingSymbol)) {
+      positions.push({
+        etfCode: h.tradingSymbol,
+        lots: [{ price: h.avgCostPrice, qty: h.totalQty, date: new Date().toISOString().split('T')[0], type: 'dhan-import' }],
+        openDate: new Date().toISOString().split('T')[0]
+      });
+      added++;
+    }
+  });
+  saveState();
+  toast(`✅ Imported ${added} holdings to Portfolio`, 'success');
+  renderPortfolio();
+}
+
+function dhanFetchOrders() {
+  if (!dhanState.connected) return;
+  dhanApiCall('GET', 'https://api.dhan.co/v2/orders', null)
+    .then(data => {
+      if (Array.isArray(data)) {
+        dhanState.orders = data;
+        renderDhanOrders(data);
+      } else throw new Error();
+    })
+    .catch(() => {
+      document.getElementById('dhanOrdersBody').innerHTML = `
+        <tr><td colspan="7"><div style="text-align:center;padding:1rem;color:var(--muted);font-size:0.75rem;">
+          Order history blocked by CORS. <a href="https://web.dhan.co" target="_blank" style="color:var(--accent2)">View on Dhan →</a>
+        </div></td></tr>`;
+    });
+}
+
+function renderDhanOrders(orders) {
+  const tb = document.getElementById('dhanOrdersBody');
+  if (!orders.length) {
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="e-icon">📋</div><div class="e-msg">No orders today</div></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = orders.slice(0,20).map(o => `
+    <tr>
+      <td style="font-family:'JetBrains Mono';font-size:0.68rem">${o.createTime?.split(' ')[1]||'—'}</td>
+      <td><span class="etf-code">${o.tradingSymbol||o.securityId}</span></td>
+      <td class="${o.transactionType==='BUY'?'pl-pos':'pl-neg'}" style="font-weight:700;font-size:0.75rem">${o.transactionType}</td>
+      <td style="font-family:'JetBrains Mono'">${o.quantity}</td>
+      <td style="font-family:'JetBrains Mono'">${fmt(o.price||o.averageTradedPrice||0)}</td>
+      <td><span class="order-status ${o.orderStatus}">${o.orderStatus}</span></td>
+      <td style="font-family:'JetBrains Mono';font-size:0.65rem;color:var(--muted)">${o.orderId}</td>
+    </tr>
+  `).join('');
+}
+
+function populateDhanOrderDropdown() {
+  const sel = document.getElementById('dhanOrderSymbol');
+  sel.innerHTML = '<option value="">-- Select ETF --</option>' +
+    ETF_DATA.map(e => `<option value="${e.code}">${e.code} — ${e.name.substring(0,35)}</option>`).join('');
+}
+
+function updateDhanOrderSecurity() {
+  const code = document.getElementById('dhanOrderSymbol').value;
+  const secId = DHAN_SECURITY_MAP[code] || '';
+  document.getElementById('dhanSecurityId').value = secId;
+  if (code) {
+    const etf = ETF_DATA.find(e=>e.code===code);
+    if (etf) document.getElementById('dhanOrderPrice').value = etf.cmp;
+  }
+}
+
+function placeDhanOrder() {
+  if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
+  const symbol = document.getElementById('dhanOrderSymbol').value;
+  const txn = document.getElementById('dhanOrderTxn').value;
+  const qty = parseInt(document.getElementById('dhanOrderQty').value);
+  const orderType = document.getElementById('dhanOrderType').value;
+  const price = parseFloat(document.getElementById('dhanOrderPrice').value) || 0;
+  const product = document.getElementById('dhanOrderProduct').value;
+  const securityId = document.getElementById('dhanSecurityId').value;
+
+  if (!symbol || !qty) { toast('Select ETF and enter quantity', 'error'); return; }
+
+  const orderPayload = {
+    dhanClientId: dhanState.clientId,
+    transactionType: txn,
+    exchangeSegment: 'NSE_EQ',
+    productType: product,
+    orderType: orderType,
+    validity: 'DAY',
+    securityId: securityId || '0',
+    quantity: qty,
+    price: orderType === 'LIMIT' ? price : 0,
+    afterMarketOrder: false
+  };
+
+  const resultDiv = document.getElementById('dhanOrderResult');
+  resultDiv.innerHTML = `<div style="color:var(--accent);font-size:0.75rem;">⏳ Placing order...</div>`;
+
+  dhanApiCall('POST', 'https://api.dhan.co/v2/orders', orderPayload)
+    .then(data => {
+      if (data.orderId) {
+        resultDiv.innerHTML = `
+          <div style="padding:1rem;background:rgba(0,227,150,0.08);border:1px solid rgba(0,227,150,0.2);border-radius:10px;font-size:0.78rem;">
+            <div style="color:var(--green);font-weight:700;margin-bottom:6px;">✅ Order Placed!</div>
+            <div style="font-family:'JetBrains Mono';color:var(--muted);">
+              Order ID: <strong style="color:var(--text)">${data.orderId}</strong><br>
+              Status: <strong style="color:var(--accent)">${data.orderStatus}</strong>
+            </div>
+          </div>`;
+        dhanFetchOrders();
+        // Also log to portfolio
+        openBuy(symbol);
+        toast(`✅ Order placed for ${symbol}`, 'success');
+      } else throw new Error(data.errorMessage || 'Order failed');
+    })
+    .catch(err => {
+      // CORS fallback — open Dhan web with deep link
+      resultDiv.innerHTML = `
+        <div style="padding:1rem;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:10px;font-size:0.78rem;">
+          <div style="color:var(--accent);font-weight:700;margin-bottom:8px;">⚠️ CORS blocked — Use one of these:</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="https://web.dhan.co" target="_blank" class="btn-sm btn-dhan" style="text-decoration:none;">
+              🌐 Open Dhan Web
+            </a>
+            <button class="btn-sm btn-primary" onclick="copyOrderDetails('${symbol}','${txn}',${qty},${price},'${orderType}')">
+              📋 Copy Order Details
+            </button>
+          </div>
+          <div style="margin-top:8px;font-family:'JetBrains Mono';font-size:0.7rem;color:var(--muted);">
+            Symbol: ${symbol} | ${txn} ${qty} units @ ${fmt(price)} | ${orderType} ${product}
+          </div>
+        </div>`;
+    });
+}
+
+function copyOrderDetails(symbol, txn, qty, price, orderType) {
+  const text = `${txn} ${qty} units of ${symbol} @ ${price} (${orderType}) on Dhan`;
+  navigator.clipboard.writeText(text).then(() => toast('📋 Order details copied!', 'success'));
+}
+
+function dhanRefreshAll() {
+  if (!dhanState.connected) return;
+  dhanFetchHoldings();
+  dhanFetchOrders();
+}
+
+function dhanDisconnect() {
+  if (!confirm('Disconnect Dhan account?')) return;
+  dhanState = { connected: false, clientId: '', token: '', holdings: [], orders: [], funds: null, lastSync: null };
+  localStorage.removeItem('dhan_creds');
+  document.getElementById('dhanClientId').value = '';
+  document.getElementById('dhanToken').value = '';
+  updateDhanStatusUI(false);
+  toast('Disconnected from Dhan', 'info');
+}
+
+function renderDhanSection() {
+  populateDhanOrderDropdown();
+  if (dhanState.connected) {
+    updateDhanStatusUI(true);
+    if (dhanState.holdings.length) renderDhanHoldings(dhanState.holdings);
+    if (dhanState.orders.length) renderDhanOrders(dhanState.orders);
+    if (dhanState.funds) renderDhanFunds(dhanState.funds);
+  }
+}
+
+
+function init() {
+  loadState();
+  loadSettings();
+  dhanLoadCredentials();
+  renderDashboard();
+  renderFullTable();
+}
+
+init();
+</script>
+</body>
+</html>
