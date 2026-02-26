@@ -405,15 +405,17 @@
   </div>
 </header>
 
-<!-- MODAL: BUY -->
+<!-- MODAL: BUY → DHAN REDIRECT -->
 <div class="modal-overlay" id="buyModal">
-  <div class="modal">
+  <div class="modal" style="width:580px;">
     <button class="modal-close" onclick="closeModal('buyModal')">✕</button>
-    <div class="modal-title">📥 Place Order</div>
+    <div class="modal-title">📥 Buy on Dhan</div>
     <div class="etf-modal-info" id="modalInfo"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+    <!-- Step 1: Pre-fill details -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
       <div class="form-group">
-        <label class="form-label">Buy Price (₹)</label>
+        <label class="form-label">Buy Price (₹) — for record</label>
         <input class="form-input" id="modalPrice" type="number" step="0.01" placeholder="Enter price">
       </div>
       <div class="form-group">
@@ -432,23 +434,45 @@
         <input class="form-input" id="modalDate" type="date">
       </div>
     </div>
-    <div id="buyChargesBreakdown" style="margin-top:1rem;padding:1rem;background:var(--bg3);border-radius:10px;font-size:0.74rem;"></div>
+
+    <!-- Charges breakdown -->
+    <div id="buyChargesBreakdown" style="margin-bottom:1rem;"></div>
+
+    <!-- Dhan redirect instruction -->
+    <div style="padding:1rem;background:rgba(0,212,170,0.07);border:1px solid rgba(0,212,170,0.25);border-radius:12px;margin-bottom:1rem;">
+      <div style="font-size:0.72rem;color:var(--accent2);font-weight:700;margin-bottom:8px;">🚀 STEP 1 — Place order on Dhan</div>
+      <div style="font-size:0.74rem;color:var(--muted);margin-bottom:10px;">Click below to open Dhan web with this ETF pre-searched. Place your CNC buy order there, then come back and confirm below.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-primary" id="btnOpenDhan" onclick="openDhanForBuy()" style="flex:1;min-width:160px;">
+          🌐 Open Dhan Web to Buy
+        </button>
+        <button class="btn-sm btn-dhan" onclick="openDhanApp()" style="padding:9px 16px;">
+          📱 Open Dhan App
+        </button>
+      </div>
+    </div>
+
+    <div style="padding:0.8rem 1rem;background:rgba(247,147,26,0.07);border:1px solid rgba(247,147,26,0.2);border-radius:10px;margin-bottom:1rem;font-size:0.72rem;color:var(--muted);">
+      <strong style="color:var(--accent);">STEP 2 — After executing on Dhan:</strong> Enter the actual traded price below, then click <strong style="color:var(--text)">Confirm &amp; Log Trade</strong> to record it in your tracker. Charges will be auto-fetched from Dhan if connected.
+    </div>
+
     <div class="modal-actions">
-      <button class="btn-primary" onclick="confirmBuy()">✅ Confirm Buy</button>
+      <button class="btn-primary" onclick="confirmBuy()" style="background:var(--accent2);color:var(--bg);">✅ Confirm &amp; Log Trade</button>
       <button class="btn-cancel" onclick="closeModal('buyModal')">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: SELL -->
+<!-- MODAL: SELL → DHAN REDIRECT -->
 <div class="modal-overlay" id="sellModal">
-  <div class="modal">
+  <div class="modal" style="width:580px;">
     <button class="modal-close" onclick="closeModal('sellModal')">✕</button>
-    <div class="modal-title">📤 Sell Position</div>
+    <div class="modal-title">📤 Sell on Dhan</div>
     <div class="etf-modal-info" id="sellModalInfo"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
       <div class="form-group">
-        <label class="form-label">Sell Price (₹)</label>
+        <label class="form-label">Sell Price (₹) — for record</label>
         <input class="form-input" id="sellPrice" type="number" step="0.01" placeholder="Exit price">
       </div>
       <div class="form-group">
@@ -456,10 +480,34 @@
         <input class="form-input" id="sellDate" type="date">
       </div>
     </div>
-    <div id="sellSummary" style="margin-top:1rem;padding:1rem;background:var(--bg3);border-radius:10px;font-family:'JetBrains Mono';font-size:0.78rem;"></div>
-    <div id="sellChargesBreakdown" style="margin-top:0.6rem;padding:1rem;background:var(--bg3);border-radius:10px;font-size:0.74rem;"></div>
+
+    <div id="sellSummary" style="margin-bottom:1rem;padding:1rem;background:var(--bg3);border-radius:10px;font-family:'JetBrains Mono';font-size:0.78rem;"></div>
+    <div id="sellChargesBreakdown" style="margin-bottom:1rem;"></div>
+
+    <!-- Dhan redirect -->
+    <div style="padding:1rem;background:rgba(255,69,96,0.07);border:1px solid rgba(255,69,96,0.25);border-radius:12px;margin-bottom:1rem;">
+      <div style="font-size:0.72rem;color:var(--red);font-weight:700;margin-bottom:8px;">🚀 STEP 1 — Place sell order on Dhan</div>
+      <div style="font-size:0.74rem;color:var(--muted);margin-bottom:10px;">Click below to open Dhan web with this ETF. Place your CNC sell order there, then come back and confirm below.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-primary" id="btnOpenDhanSell" onclick="openDhanForSell()" style="flex:1;min-width:160px;background:var(--red);">
+          🌐 Open Dhan Web to Sell
+        </button>
+        <button class="btn-sm btn-dhan" onclick="openDhanApp()" style="padding:9px 16px;">
+          📱 Open Dhan App
+        </button>
+      </div>
+    </div>
+
+    <div style="padding:0.8rem 1rem;background:rgba(247,147,26,0.07);border:1px solid rgba(247,147,26,0.2);border-radius:10px;margin-bottom:1rem;font-size:0.72rem;color:var(--muted);">
+      <strong style="color:var(--accent);">STEP 2 — After executing on Dhan:</strong> Enter actual sell price above, then confirm to log the trade. Real charges will be fetched from Dhan tradebook if API is connected.
+    </div>
+
+    <div id="dhanChargesFetchStatus" style="display:none;padding:0.6rem 1rem;background:rgba(0,212,170,0.07);border:1px solid rgba(0,212,170,0.2);border-radius:8px;margin-bottom:1rem;font-size:0.72rem;color:var(--accent2);"></div>
+
     <div class="modal-actions">
-      <button class="btn-primary" style="background:var(--red);" onclick="confirmSell()">📤 Confirm Sell</button>
+      <button class="btn-primary" onclick="fetchDhanChargesAndSell()" style="background:var(--red);">
+        📤 Fetch Charges &amp; Confirm Sell
+      </button>
       <button class="btn-cancel" onclick="closeModal('sellModal')">Cancel</button>
     </div>
   </div>
@@ -763,60 +811,41 @@
     </div>
   </div>
 
-  <!-- Place Order via Dhan -->
+
+  <!-- Dhan Data Fetch Panel (READ-ONLY) -->
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">🚀 Place ETF Order on Dhan</span>
-      <span style="font-size:0.72rem;color:var(--muted)">CNC delivery orders for ETF strategy</span>
+      <span class="panel-title">📊 Fetch Data from Dhan (Read-Only)</span>
+      <span style="font-size:0.72rem;color:var(--accent2);">API used only for data — orders go via Dhan app/web</span>
     </div>
     <div class="panel-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;align-items:end;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
         <div class="form-group">
-          <label class="form-label">ETF Symbol</label>
-          <select class="form-select" id="dhanOrderSymbol" onchange="updateDhanOrderSecurity()">
-            <option value="">-- Select ETF --</option>
-          </select>
+          <label class="form-label">From Date</label>
+          <input class="form-input" id="dhanFetchFrom" type="date">
         </div>
         <div class="form-group">
-          <label class="form-label">Transaction</label>
-          <select class="form-select" id="dhanOrderTxn">
-            <option value="BUY">BUY</option>
-            <option value="SELL">SELL</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Quantity</label>
-          <input class="form-input" id="dhanOrderQty" type="number" placeholder="Units" min="1">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Order Type</label>
-          <select class="form-select" id="dhanOrderType">
-            <option value="LIMIT">LIMIT</option>
-            <option value="MARKET">MARKET</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Price (₹) — for LIMIT</label>
-          <input class="form-input" id="dhanOrderPrice" type="number" step="0.05" placeholder="Limit price">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Product Type</label>
-          <select class="form-select" id="dhanOrderProduct">
-            <option value="CNC">CNC (Delivery)</option>
-            <option value="INTRADAY">INTRADAY</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Security ID</label>
-          <input class="form-input" id="dhanSecurityId" type="text" placeholder="Auto-filled or enter manually">
-        </div>
-        <div class="form-group" style="align-self:end;">
-          <button class="btn-primary" onclick="placeDhanOrder()" style="width:100%;">🚀 Place Order</button>
+          <label class="form-label">To Date</label>
+          <input class="form-input" id="dhanFetchTo" type="date">
         </div>
       </div>
-      <div id="dhanOrderResult" style="margin-top:1rem;"></div>
-      <div style="margin-top:1rem;padding:0.8rem;background:var(--bg3);border-radius:8px;font-size:0.7rem;color:var(--muted);">
-        <strong style="color:var(--accent)">Note:</strong> Orders go directly to your Dhan account via API. Ensure your IP is whitelisted on Dhan portal under Settings → API → Whitelist IP before placing orders.
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+        <button class="btn-sm btn-dhan" onclick="dhanFetchTradebook()">📋 Fetch Tradebook</button>
+        <button class="btn-sm btn-dhan" onclick="dhanFetchLedger()">📒 Fetch Ledger</button>
+        <button class="btn-sm btn-dhan" onclick="dhanFetchHoldings()">🗂️ Sync Holdings</button>
+        <button class="btn-sm btn-dhan" onclick="dhanFetchFunds()">💰 Fetch Funds</button>
+      </div>
+      <div id="dhanDataResult" style="max-height:300px;overflow-y:auto;"></div>
+
+      <div style="margin-top:1rem;padding:1rem;background:rgba(0,212,170,0.07);border:1px solid rgba(0,212,170,0.2);border-radius:10px;font-size:0.75rem;line-height:1.8;">
+        <strong style="color:var(--accent2);">🔑 How ordering works with this app:</strong><br>
+        <span style="color:var(--muted);">
+          1. In <strong style="color:var(--text)">Screener</strong> or <strong style="color:var(--text)">Dashboard</strong> — click <strong style="color:var(--text)">BUY / AVG</strong> button on any ETF<br>
+          2. Modal opens with order details + charges estimate → click <strong style="color:var(--text)">Open Dhan Web</strong> or <strong style="color:var(--text)">Open Dhan App</strong><br>
+          3. Place your CNC order on Dhan, then return here<br>
+          4. Enter the actual traded price → click <strong style="color:var(--text)">Confirm &amp; Log Trade</strong><br>
+          5. If API is connected, real charges are auto-fetched from Dhan tradebook ✅
+        </span>
       </div>
     </div>
   </div>
@@ -1411,7 +1440,10 @@ function renderClosedTrades() {
       <td style="font-family:'JetBrains Mono'">${fmt(t.sellPrice)}</td>
       <td style="font-family:'JetBrains Mono'">${fmt(t.invested)}</td>
       <td class="${(t.grossPL||t.pl)>=0?'pl-pos':'pl-neg'}">${fmt(t.grossPL||t.pl)}</td>
-      <td style="color:var(--red);font-family:'JetBrains Mono'">${fmt(t.charges||0)}</td>
+      <td style="color:var(--red);font-family:'JetBrains Mono'">
+        ${fmt(t.charges||0)}
+        ${t.chargesFromDhan ? '<span style="font-size:0.6rem;color:var(--green);margin-left:4px;" title="Fetched from Dhan API">●DHAN</span>' : '<span style="font-size:0.6rem;color:var(--muted);margin-left:4px;" title="Calculated estimate">~est</span>'}
+      </td>
       <td class="${t.pl>=0?'pl-pos':'pl-neg'}" style="font-weight:700">${fmt(t.pl)}</td>
       <td class="${t.netRetPct>=0?'pl-pos':'pl-neg'}">${fmtPct(t.netRetPct||t.retPct)}</td>
       <td style="font-family:'JetBrains Mono'">${t.days}d</td>
@@ -1423,6 +1455,9 @@ function renderClosedTrades() {
 // ═══════════════════════════════════════════════
 // BUY/SELL MODALS
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// DHAN REDIRECT — BUY FLOW
+// ═══════════════════════════════════════════════
 function openBuy(code) {
   const etf = ETF_DATA.find(e=>e.code===code);
   selectedETF = etf;
@@ -1430,26 +1465,24 @@ function openBuy(code) {
   document.getElementById('modalInfo').innerHTML = `
     <div class="etf-modal-name">${etf.code} — ${etf.name}</div>
     <div class="etf-modal-meta">
-      CMP: ${fmt(etf.cmp)} | 52wk Low: ${fmt(etf.low52)} | ${etf.pct.toFixed(2)}% from low | Rank #${etf.rank}
+      CMP: ${fmt(etf.cmp)} &nbsp;|&nbsp; 52wk Low: ${fmt(etf.low52)} &nbsp;|&nbsp; ${etf.pct.toFixed(2)}% from low &nbsp;|&nbsp; Rank #${etf.rank}
     </div>
-    <div style="margin-top:8px;font-size:0.72rem;color:var(--muted);">
-      Suggested: Deploy ${fmt(partVal)} = ~${Math.floor(partVal/etf.cmp)} units at market price
+    <div style="margin-top:6px;font-size:0.72rem;color:var(--muted);">
+      Suggested: Deploy <strong style="color:var(--text)">${fmt(partVal)}</strong> → ~<strong style="color:var(--text)">${Math.floor(partVal/etf.cmp)} units</strong> @ CMP
     </div>
   `;
   document.getElementById('modalPrice').value = etf.cmp;
   document.getElementById('modalQty').value = Math.floor(partVal / etf.cmp);
   document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('modalType').value = 'fresh';
-
-  // Live charges update
-  const updateBuyCharges = () => {
+  const upd = () => {
     const p = parseFloat(document.getElementById('modalPrice').value)||0;
     const q = parseInt(document.getElementById('modalQty').value)||0;
     if (p && q) renderChargesBreakdown('buyChargesBreakdown','BUY',p,q);
   };
-  document.getElementById('modalPrice').oninput = updateBuyCharges;
-  document.getElementById('modalQty').oninput = updateBuyCharges;
-  updateBuyCharges();
+  document.getElementById('modalPrice').oninput = upd;
+  document.getElementById('modalQty').oninput = upd;
+  upd();
   document.getElementById('buyModal').classList.add('open');
 }
 
@@ -1460,30 +1493,75 @@ function openAvg(code) {
   const partVal = config.capital / config.parts;
   const avgCost = pos ? totalInvested(pos)/totalUnits(pos) : etf.cmp;
   const drop = pos ? ((avgCost - etf.cmp)/avgCost*100).toFixed(2) : 0;
-
   document.getElementById('modalInfo').innerHTML = `
-    <div class="etf-modal-name">${etf.code} — Averaging Down</div>
+    <div class="etf-modal-name">${etf.code} — Averaging Down (Level ${pos ? pos.lots.length : 1})</div>
     <div class="etf-modal-meta">
-      Current Avg Cost: ${fmt(avgCost)} | CMP: ${fmt(etf.cmp)} | Drop: ${drop}% | Level: ${pos ? pos.lots.length : 0}
+      Current Avg: ${fmt(avgCost)} &nbsp;|&nbsp; CMP: ${fmt(etf.cmp)} &nbsp;|&nbsp; Drop from avg: <span style="color:var(--red)">${drop}%</span>
     </div>
-    <div style="margin-top:8px;font-size:0.72rem;color:var(--accent);">
-      Adding 1 more part: ${fmt(partVal)} = ~${Math.floor(partVal/etf.cmp)} units
-    </div>
+    <div style="margin-top:6px;font-size:0.72rem;color:var(--accent);">Adding 1 more part: ${fmt(partVal)} = ~${Math.floor(partVal/etf.cmp)} units</div>
   `;
   document.getElementById('modalPrice').value = etf.cmp;
   document.getElementById('modalQty').value = Math.floor(partVal / etf.cmp);
   document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('modalType').value = 'avg';
-
-  const updateAvgCharges = () => {
+  const upd = () => {
     const p = parseFloat(document.getElementById('modalPrice').value)||0;
     const q = parseInt(document.getElementById('modalQty').value)||0;
     if (p && q) renderChargesBreakdown('buyChargesBreakdown','BUY',p,q);
   };
-  document.getElementById('modalPrice').oninput = updateAvgCharges;
-  document.getElementById('modalQty').oninput = updateAvgCharges;
-  updateAvgCharges();
+  document.getElementById('modalPrice').oninput = upd;
+  document.getElementById('modalQty').oninput = upd;
+  upd();
   document.getElementById('buyModal').classList.add('open');
+}
+
+function openDhanForBuy() {
+  if (!selectedETF) return;
+  const code = selectedETF.code;
+  const qty  = document.getElementById('modalQty').value || '';
+  const price = document.getElementById('modalPrice').value || '';
+
+  // Copy order details to clipboard so user can paste in Dhan
+  const orderText = `BUY ${qty} units of ${code} @ ₹${price} (CNC / Delivery)`;
+  navigator.clipboard.writeText(orderText).catch(()=>{});
+
+  // Dhan web ETF search URL  — opens the ETF directly in holdings/order panel
+  const url = `https://web.dhan.co/markets/ETFs`;
+  window.open(url, '_blank');
+  toast(`📋 Order details copied! Search "${code}" on Dhan and place CNC Buy`, 'info');
+
+  // Show a reminder in the modal
+  document.getElementById('btnOpenDhan').textContent = '✅ Dhan Opened — Place order there';
+  document.getElementById('btnOpenDhan').style.background = 'var(--accent2)';
+}
+
+function openDhanForSell() {
+  if (sellPositionIdx === null) return;
+  const pos = positions[sellPositionIdx];
+  const units = totalUnits(pos);
+  const sp = document.getElementById('sellPrice').value || '';
+  const orderText = `SELL ${units} units of ${pos.etfCode} @ ₹${sp} (CNC / Delivery)`;
+  navigator.clipboard.writeText(orderText).catch(()=>{});
+
+  // Open Dhan web holdings page — user can sell directly from holdings
+  const url = `https://web.dhan.co/portfolio/holdings`;
+  window.open(url, '_blank');
+  toast(`📋 Order copied! Go to Holdings on Dhan, find ${pos.etfCode} and Sell`, 'info');
+
+  document.getElementById('btnOpenDhanSell').textContent = '✅ Dhan Opened — Sell from Holdings';
+  document.getElementById('btnOpenDhanSell').style.background = 'var(--accent)';
+}
+
+function openDhanApp() {
+  // Universal link — opens Dhan app on mobile, Dhan web on desktop
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    // Try app deep link first, fall back to web
+    window.location.href = 'dhanapp://';
+    setTimeout(() => { window.open('https://dhan.co/app', '_blank'); }, 1200);
+  } else {
+    window.open('https://web.dhan.co/portfolio/holdings', '_blank');
+  }
 }
 
 function confirmBuy() {
@@ -1491,28 +1569,32 @@ function confirmBuy() {
   const qty = parseInt(document.getElementById('modalQty').value);
   const date = document.getElementById('modalDate').value;
   const type = document.getElementById('modalType').value;
-
-  if (!price || !qty) { toast('Enter price and quantity', 'error'); return; }
-
+  if (!price || !qty) { toast('Enter actual traded price and quantity', 'error'); return; }
   const charges = calcCharges('BUY', price, qty);
   const code = selectedETF.code;
   let pos = positions.find(p=>p.etfCode===code);
-
   if (!pos) {
     pos = { etfCode: code, lots: [], openDate: date };
     positions.push(pos);
   }
-
-  pos.lots.push({ price, qty, date, type, charges: charges.total });
+  pos.lots.push({ price, qty, date, type, charges: charges.total, chargesDetail: charges });
   saveState();
-  toast(`✅ ${type==='avg'?'Averaged':'Bought'} ${qty} units of ${code} @ ${fmt(price)} | Charges: ${fmt(charges.total)}`, 'success');
+
+  // Try to fetch actual charges from Dhan tradebook (async, non-blocking)
+  if (dhanState.connected) fetchAndUpdateBuyCharges(code, date, pos.lots.length - 1);
+
+  toast(`✅ Logged: ${qty} units of ${code} @ ${fmt(price)} | Est. charges: ${fmt(charges.total)}`, 'success');
   closeModal('buyModal');
   renderDashboard();
   if (document.getElementById('portfolio').classList.contains('active')) renderPortfolio();
   if (document.getElementById('screener').classList.contains('active')) renderFullTable();
 }
 
+// ═══════════════════════════════════════════════
+// DHAN REDIRECT — SELL FLOW
+// ═══════════════════════════════════════════════
 let sellPositionIdx = null;
+
 function openSell(idx) {
   sellPositionIdx = idx;
   const pos = positions[idx];
@@ -1526,7 +1608,7 @@ function openSell(idx) {
   document.getElementById('sellModalInfo').innerHTML = `
     <div class="etf-modal-name">${pos.etfCode}</div>
     <div class="etf-modal-meta">
-      Avg Cost: ${fmt(avgCost)} | Units: ${units} | Invested: ${fmt(invested)}
+      Avg Cost: ${fmt(avgCost)} &nbsp;|&nbsp; Units: ${units} &nbsp;|&nbsp; Invested: ${fmt(invested)} &nbsp;|&nbsp; CMP: ${fmt(cmp)}
     </div>
     <div class="target-indicator" style="margin-top:8px;">
       <span class="target-chip t1">π×1: ${fmt(avgCost*(1+3.14/100))}</span>
@@ -1536,6 +1618,7 @@ function openSell(idx) {
   `;
   document.getElementById('sellPrice').value = t1;
   document.getElementById('sellDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('dhanChargesFetchStatus').style.display = 'none';
 
   updateSellSummary(avgCost, units, invested, t1, pos.openDate);
   document.getElementById('sellPrice').oninput = () => {
@@ -1549,74 +1632,173 @@ function updateSellSummary(avgCost, units, invested, sellP, openDate) {
   const grossPL = (sp - avgCost) * units;
   const plPct = ((sp - avgCost)/avgCost)*100;
   const days = openDate ? Math.max(0, Math.round((new Date()-new Date(openDate))/(1000*86400))) : 0;
-
-  // Buy charges already paid — only compute sell charges now
   const sellCharges = calcCharges('SELL', sp, units);
-  // Also estimate total buy charges from lots
-  const pos = positions[sellPositionIdx];
+  const pos = sellPositionIdx !== null ? positions[sellPositionIdx] : null;
   const totalBuyCharges = pos ? pos.lots.reduce((s,l) => s + (l.charges||calcCharges('BUY',l.price,l.qty).total), 0) : 0;
   const totalCharges = sellCharges.total + totalBuyCharges;
   const netPL = grossPL - totalCharges;
   const netRetPct = (netPL / invested) * 100;
 
-  const summary = document.getElementById('sellSummary');
-  summary.innerHTML = `
+  document.getElementById('sellSummary').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-family:'JetBrains Mono';">
       <div>
         <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">GROSS P&L</div>
         <div class="${grossPL>=0?'pl-pos':'pl-neg'}" style="font-size:0.88rem;">${fmt(grossPL)}</div>
-        <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(plPct)}</div>
+        <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(plPct)} | ${days}d held</div>
       </div>
       <div>
-        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">TOTAL CHARGES</div>
+        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">EST. CHARGES</div>
         <div style="color:var(--red);font-size:0.88rem;">${fmt(totalCharges)}</div>
-        <div style="color:var(--muted);font-size:0.62rem;">buy+sell</div>
+        <div style="color:var(--muted);font-size:0.62rem;">buy+sell combined</div>
       </div>
       <div>
         <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">NET P&L</div>
         <div class="${netPL>=0?'pl-pos':'pl-neg'}" style="font-size:0.88rem;font-weight:700;">${fmt(netPL)}</div>
-        <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(netRetPct)} | ${days}d</div>
+        <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(netRetPct)}</div>
       </div>
     </div>
   `;
-  // Show sell charges breakdown
-  renderChargesBreakdown('sellChargesBreakdown', 'SELL', sp, units);
+  if (sp > 0) renderChargesBreakdown('sellChargesBreakdown', 'SELL', sp, units);
 }
 
-function confirmSell() {
+async function fetchDhanChargesAndSell() {
   const sp = parseFloat(document.getElementById('sellPrice').value);
   const date = document.getElementById('sellDate').value;
-  if (!sp) { toast('Enter sell price', 'error'); return; }
+  if (!sp) { toast('Enter actual sell price first', 'error'); return; }
+  if (!date) { toast('Enter trade date', 'error'); return; }
 
   const pos = positions[sellPositionIdx];
   const units = totalUnits(pos);
   const invested = totalInvested(pos);
-  const avgCost = invested/units;
+  const avgCost = invested / units;
   const grossPL = (sp - avgCost) * units;
-  const days = pos.openDate ? Math.max(0, Math.round((new Date()-new Date(pos.openDate))/(1000*86400))) : 0;
 
-  // Calculate all charges
-  const sellCharges = calcCharges('SELL', sp, units);
-  const totalBuyCharges = pos.lots.reduce((s,l) => s + (l.charges || calcCharges('BUY',l.price,l.qty).total), 0);
-  const totalCharges = +(sellCharges.total + totalBuyCharges).toFixed(2);
+  // Start with estimated charges
+  let totalCharges = calcCharges('SELL', sp, units).total +
+    pos.lots.reduce((s,l) => s + (l.charges || calcCharges('BUY',l.price,l.qty).total), 0);
+  let chargesFromDhan = false;
+
+  const statusEl = document.getElementById('dhanChargesFetchStatus');
+
+  if (dhanState.connected) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(247,147,26,0.07)';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.style.borderColor = 'rgba(247,147,26,0.25)';
+    statusEl.textContent = '⏳ Fetching actual charges from Dhan tradebook...';
+
+    const actual = await fetchActualChargesFromDhan(pos.etfCode, pos.openDate || date, date);
+    if (actual !== null) {
+      totalCharges = actual;
+      chargesFromDhan = true;
+      statusEl.style.background = 'rgba(0,227,150,0.07)';
+      statusEl.style.color = 'var(--green)';
+      statusEl.style.borderColor = 'rgba(0,227,150,0.25)';
+      statusEl.innerHTML = `✅ <strong>Real charges from Dhan:</strong> ${fmt(actual)} &nbsp;·&nbsp; <span style="font-size:0.65rem;">Includes STT + Brokerage + Exchange + SEBI + GST + Stamp + DP</span>`;
+    } else {
+      statusEl.style.background = 'rgba(247,147,26,0.07)';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = '⚠️ Trade not found in Dhan yet (may take a few minutes) — using calculated estimate';
+    }
+  }
+
   const netPL = +(grossPL - totalCharges).toFixed(2);
-  const retPct = +((grossPL/invested)*100).toFixed(2);
-  const netRetPct = +((netPL/invested)*100).toFixed(2);
+  const retPct = +((grossPL / invested) * 100).toFixed(2);
+  const netRetPct = +((netPL / invested) * 100).toFixed(2);
+  const days = pos.openDate ? Math.max(0, Math.round((new Date()-new Date(pos.openDate))/(1000*86400))) : 0;
 
   closedTrades.push({
     etfCode: pos.etfCode, avgCost, sellPrice: sp,
-    invested, grossPL: +grossPL.toFixed(2), charges: totalCharges,
+    invested, grossPL: +grossPL.toFixed(2), charges: +totalCharges.toFixed(2),
     pl: netPL, retPct, netRetPct, days, closeDate: date,
-    lots: pos.lots.length
+    lots: pos.lots.length, chargesFromDhan
   });
 
   positions.splice(sellPositionIdx, 1);
   saveState();
-  toast(`✅ Sold ${pos.etfCode} @ ${fmt(sp)} | Net P&L: ${fmt(netPL)} (after ${fmt(totalCharges)} charges)`, netPL>=0?'success':'error');
+  const chargeLabel = chargesFromDhan ? 'actual Dhan charges' : 'est. charges';
+  toast(`✅ ${pos.etfCode} sold @ ${fmt(sp)} | Net: ${fmt(netPL)} (${chargeLabel}: ${fmt(totalCharges)})`, netPL>=0?'success':'error');
   closeModal('sellModal');
   renderPortfolio();
   renderDashboard();
 }
+
+// ═══════════════════════════════════════════════
+// DHAN API — FETCH ACTUAL CHARGES (READ-ONLY)
+// ═══════════════════════════════════════════════
+// Dhan /v2/trades returns per-trade: stt, brokerageCharges, exchangeTransactionCharges,
+// sebiTax, stampDuty, serviceTax (GST) — we sum these for total actual charges.
+
+async function fetchActualChargesFromDhan(symbol, fromDate, toDate) {
+  try {
+    // Dhan trades API: GET /v2/trades/{from-date}/{to-date}/{page}
+    const res = await dhanApiCall('GET', `https://api.dhan.co/v2/trades/${fromDate}/${toDate}/0`, null);
+    if (!Array.isArray(res)) return null;
+
+    // Match trades for this symbol (Dhan may return symbol with or without -EQ suffix)
+    const matched = res.filter(t =>
+      t.tradingSymbol === symbol ||
+      t.tradingSymbol === symbol + '-EQ' ||
+      (t.customSymbol && t.customSymbol.toUpperCase().includes(symbol.toUpperCase()))
+    );
+    if (!matched.length) return null;
+
+    // Sum all statutory charges across matched trades
+    let total = 0;
+    matched.forEach(t => {
+      total += parseFloat(t.stt)                       || 0;
+      total += parseFloat(t.brokerageCharges)          || 0;
+      total += parseFloat(t.exchangeTransactionCharges)|| 0;
+      total += parseFloat(t.sebiTax)                   || 0;
+      total += parseFloat(t.stampDuty)                 || 0;
+      total += parseFloat(t.serviceTax)                || 0; // GST
+    });
+
+    return total > 0 ? +total.toFixed(2) : null;
+  } catch(e) {
+    console.warn('fetchActualChargesFromDhan failed:', e.message);
+    return null;
+  }
+}
+
+// After a buy is logged, try to update charges from Dhan async
+async function fetchAndUpdateBuyCharges(etfCode, date, lotIdx) {
+  try {
+    const res = await dhanApiCall('GET', `https://api.dhan.co/v2/trades/${date}/${date}/0`, null);
+    if (!Array.isArray(res)) return;
+
+    const matched = res.filter(t =>
+      (t.tradingSymbol === etfCode || t.tradingSymbol === etfCode + '-EQ') &&
+      t.transactionType === 'BUY'
+    );
+    if (!matched.length) return;
+
+    let totalCharges = 0;
+    matched.forEach(t => {
+      totalCharges += parseFloat(t.stt)                       || 0;
+      totalCharges += parseFloat(t.brokerageCharges)          || 0;
+      totalCharges += parseFloat(t.exchangeTransactionCharges)|| 0;
+      totalCharges += parseFloat(t.sebiTax)                   || 0;
+      totalCharges += parseFloat(t.stampDuty)                 || 0;
+      totalCharges += parseFloat(t.serviceTax)                || 0;
+    });
+
+    if (totalCharges > 0) {
+      const pos = positions.find(p => p.etfCode === etfCode);
+      if (pos && pos.lots[lotIdx]) {
+        pos.lots[lotIdx].charges = +totalCharges.toFixed(2);
+        pos.lots[lotIdx].chargesFromDhan = true;
+        saveState();
+        toast(`📊 Buy charges updated from Dhan: ${fmt(totalCharges)}`, 'info');
+        if (document.getElementById('portfolio').classList.contains('active')) renderPortfolio();
+      }
+    }
+  } catch(e) {}
+}
+
+// confirmSell is now handled by fetchDhanChargesAndSell above
+// Keep for compatibility
+function confirmSell() { fetchDhanChargesAndSell(); }
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
@@ -2129,74 +2311,80 @@ function updateDhanOrderSecurity() {
   }
 }
 
-function placeDhanOrder() {
+// ── Dhan read-only data fetchers ──
+async function dhanFetchTradebook() {
   if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
-  const symbol = document.getElementById('dhanOrderSymbol').value;
-  const txn = document.getElementById('dhanOrderTxn').value;
-  const qty = parseInt(document.getElementById('dhanOrderQty').value);
-  const orderType = document.getElementById('dhanOrderType').value;
-  const price = parseFloat(document.getElementById('dhanOrderPrice').value) || 0;
-  const product = document.getElementById('dhanOrderProduct').value;
-  const securityId = document.getElementById('dhanSecurityId').value;
-
-  if (!symbol || !qty) { toast('Select ETF and enter quantity', 'error'); return; }
-
-  const orderPayload = {
-    dhanClientId: dhanState.clientId,
-    transactionType: txn,
-    exchangeSegment: 'NSE_EQ',
-    productType: product,
-    orderType: orderType,
-    validity: 'DAY',
-    securityId: securityId || '0',
-    quantity: qty,
-    price: orderType === 'LIMIT' ? price : 0,
-    afterMarketOrder: false
-  };
-
-  const resultDiv = document.getElementById('dhanOrderResult');
-  resultDiv.innerHTML = `<div style="color:var(--accent);font-size:0.75rem;">⏳ Placing order...</div>`;
-
-  dhanApiCall('POST', 'https://api.dhan.co/v2/orders', orderPayload)
+  const from = document.getElementById('dhanFetchFrom').value || new Date().toISOString().split('T')[0];
+  const to = document.getElementById('dhanFetchTo').value || from;
+  const result = document.getElementById('dhanDataResult');
+  result.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem;">⏳ Fetching tradebook...</div>';
+  dhanApiCall('GET', `https://api.dhan.co/v2/trades/${from}/${to}/0`, null)
     .then(data => {
-      if (data.orderId) {
-        resultDiv.innerHTML = `
-          <div style="padding:1rem;background:rgba(0,227,150,0.08);border:1px solid rgba(0,227,150,0.2);border-radius:10px;font-size:0.78rem;">
-            <div style="color:var(--green);font-weight:700;margin-bottom:6px;">✅ Order Placed!</div>
-            <div style="font-family:'JetBrains Mono';color:var(--muted);">
-              Order ID: <strong style="color:var(--text)">${data.orderId}</strong><br>
-              Status: <strong style="color:var(--accent)">${data.orderStatus}</strong>
-            </div>
-          </div>`;
-        dhanFetchOrders();
-        // Also log to portfolio
-        openBuy(symbol);
-        toast(`✅ Order placed for ${symbol}`, 'success');
-      } else throw new Error(data.errorMessage || 'Order failed');
-    })
-    .catch(err => {
-      // CORS fallback — open Dhan web with deep link
-      resultDiv.innerHTML = `
-        <div style="padding:1rem;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:10px;font-size:0.78rem;">
-          <div style="color:var(--accent);font-weight:700;margin-bottom:8px;">⚠️ CORS blocked — Use one of these:</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <a href="https://web.dhan.co" target="_blank" class="btn-sm btn-dhan" style="text-decoration:none;">
-              🌐 Open Dhan Web
-            </a>
-            <button class="btn-sm btn-primary" onclick="copyOrderDetails('${symbol}','${txn}',${qty},${price},'${orderType}')">
-              📋 Copy Order Details
-            </button>
-          </div>
-          <div style="margin-top:8px;font-family:'JetBrains Mono';font-size:0.7rem;color:var(--muted);">
-            Symbol: ${symbol} | ${txn} ${qty} units @ ${fmt(price)} | ${orderType} ${product}
-          </div>
-        </div>`;
+      if (!Array.isArray(data)) throw new Error('No data');
+      // Filter ETF trades only
+      const etfTrades = data.filter(t => ETF_DATA.some(e => e.code === t.tradingSymbol || e.code === (t.tradingSymbol||'').replace('-EQ','')));
+      result.innerHTML = `
+        <div style="font-size:0.7rem;color:var(--accent2);margin-bottom:8px;font-weight:700;">📋 TRADEBOOK — ${etfTrades.length} ETF trades (${from} to ${to})</div>
+        <table class="port-table" style="font-size:0.72rem;">
+          <thead><tr><th>Time</th><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Turnover</th></tr></thead>
+          <tbody>${etfTrades.map(t => `<tr>
+            <td style="color:var(--muted)">${(t.createTime||'').split(' ')[1]||'—'}</td>
+            <td><span class="etf-code">${t.tradingSymbol}</span></td>
+            <td class="${t.transactionType==='BUY'?'pl-pos':'pl-neg'}" style="font-weight:700">${t.transactionType}</td>
+            <td style="font-family:'JetBrains Mono'">${t.tradedQuantity}</td>
+            <td style="font-family:'JetBrains Mono'">${fmt(t.tradedPrice)}</td>
+            <td style="font-family:'JetBrains Mono'">${fmt(t.tradedQuantity * t.tradedPrice)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+        ${etfTrades.length === 0 ? '<div style="text-align:center;padding:1rem;color:var(--muted);font-size:0.75rem;">No ETF trades in this period</div>' : ''}
+      `;
+    }).catch(() => {
+      result.innerHTML = '<div style="color:var(--red);font-size:0.75rem;padding:0.5rem;">⚠️ CORS blocked — tradebook not accessible from browser. Use Dhan app or run with a local proxy.</div>';
     });
 }
 
-function copyOrderDetails(symbol, txn, qty, price, orderType) {
-  const text = `${txn} ${qty} units of ${symbol} @ ${price} (${orderType}) on Dhan`;
-  navigator.clipboard.writeText(text).then(() => toast('📋 Order details copied!', 'success'));
+async function dhanFetchLedger() {
+  if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
+  const from = document.getElementById('dhanFetchFrom').value || new Date().toISOString().split('T')[0];
+  const to = document.getElementById('dhanFetchTo').value || from;
+  const result = document.getElementById('dhanDataResult');
+  result.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem;">⏳ Fetching ledger...</div>';
+  dhanApiCall('GET', `https://api.dhan.co/v2/ledger?from-date=${from}&to-date=${to}`, null)
+    .then(data => {
+      if (!Array.isArray(data)) throw new Error();
+      const chargeKeywords = ['STT','BROKERAGE','TRANSACTION','EXCHANGE','STAMP','GST','DP CHAR','SEBI'];
+      const charges = data.filter(e => chargeKeywords.some(k => (e.narration||'').toUpperCase().includes(k)));
+      const totalCharges = charges.reduce((s,e) => s + (parseFloat(e.debit)||0), 0);
+      result.innerHTML = `
+        <div style="font-size:0.7rem;color:var(--accent2);margin-bottom:8px;font-weight:700;">📒 LEDGER — ${data.length} entries | Charges identified: ${fmt(totalCharges)}</div>
+        <table class="port-table" style="font-size:0.72rem;">
+          <thead><tr><th>Date</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+          <tbody>${data.slice(0,30).map(e => `<tr>
+            <td style="color:var(--muted)">${e.voucherdate||'—'}</td>
+            <td style="max-width:200px;font-size:0.68rem;">${e.narration}</td>
+            <td style="color:var(--red);font-family:'JetBrains Mono'">${e.debit>0?fmt(e.debit):''}</td>
+            <td style="color:var(--green);font-family:'JetBrains Mono'">${e.credit>0?fmt(e.credit):''}</td>
+            <td style="font-family:'JetBrains Mono';color:var(--muted)">${fmt(e.runbal)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      `;
+    }).catch(() => {
+      result.innerHTML = '<div style="color:var(--red);font-size:0.75rem;padding:0.5rem;">⚠️ CORS blocked — ledger not accessible from browser directly.</div>';
+    });
+}
+
+async function dhanFetchFunds() {
+  if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
+  const result = document.getElementById('dhanDataResult');
+  dhanApiCall('GET', 'https://api.dhan.co/v2/fundlimit', null)
+    .then(data => {
+      if (data && !data.errorType) {
+        renderDhanFunds(data);
+        result.innerHTML = '<div style="color:var(--green);font-size:0.75rem;padding:0.5rem;">✅ Funds updated</div>';
+      } else throw new Error();
+    }).catch(() => {
+      result.innerHTML = '<div style="color:var(--red);font-size:0.75rem;padding:0.5rem;">⚠️ CORS blocked — funds not accessible from browser directly.</div>';
+    });
 }
 
 function dhanRefreshAll() {
@@ -2216,7 +2404,14 @@ function dhanDisconnect() {
 }
 
 function renderDhanSection() {
-  populateDhanOrderDropdown();
+  // Set default date range (last 30 days)
+  const today = new Date().toISOString().split('T')[0];
+  const monthAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  const fromEl = document.getElementById('dhanFetchFrom');
+  const toEl = document.getElementById('dhanFetchTo');
+  if (fromEl && !fromEl.value) fromEl.value = monthAgo;
+  if (toEl && !toEl.value) toEl.value = today;
+
   if (dhanState.connected) {
     updateDhanStatusUI(true);
     if (dhanState.holdings.length) renderDhanHoldings(dhanState.holdings);
