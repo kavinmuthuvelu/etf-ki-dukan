@@ -353,6 +353,16 @@
   .order-status.REJECTED { background: rgba(255,69,96,0.15); border: 1px solid rgba(255,69,96,0.3); color: var(--red); }
   .order-status.CANCELLED { background: rgba(107,122,158,0.15); border: 1px solid rgba(107,122,158,0.3); color: var(--muted); }
 
+  /* ── AUTO-FETCH STATUS ── */
+  .auto-fetch-status {
+    padding: 10px 14px; border-radius: 10px; font-size: 0.75rem;
+    border: 1px solid; line-height: 1.5; transition: all 0.3s;
+  }
+  .auto-fetch-status.info      { border-color: rgba(0,212,170,0.3); background: rgba(0,212,170,0.07); color: var(--accent2); }
+  .auto-fetch-status.fetching  { border-color: rgba(247,147,26,0.3); background: rgba(247,147,26,0.07); color: var(--accent); animation: pulse 1.5s infinite; }
+  .auto-fetch-status.success   { border-color: rgba(0,227,150,0.35); background: rgba(0,227,150,0.09); color: var(--green); }
+  .auto-fetch-status.warn      { border-color: rgba(255,69,96,0.3); background: rgba(255,69,96,0.07); color: var(--red); }
+
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -434,6 +444,9 @@
         <input class="form-input" id="modalDate" type="date">
       </div>
     </div>
+
+    <!-- Auto-fetch status (filled when user returns from Dhan) -->
+    <div id="buyAutoFetchStatus" class="auto-fetch-status" style="display:none;margin-bottom:1rem;"></div>
 
     <!-- Charges breakdown -->
     <div id="buyChargesBreakdown" style="margin-bottom:1rem;"></div>
@@ -726,8 +739,10 @@
           <strong style="color:var(--accent)">📋 How to get your Dhan credentials:</strong><br>
           1. Login to <strong style="color:var(--text)">dhan.co</strong> → My Profile → Dhan HQ API<br>
           2. Create App → get <strong style="color:var(--text)">Client ID</strong> + <strong style="color:var(--text)">Access Token</strong><br>
-          3. Note: Access Token expires every 24 hours — regenerate daily<br>
-          4. <strong style="color:var(--red)">Order APIs require Static IP whitelisting</strong> on Dhan portal
+          3. Note: Access Token expires every 24 hours — regenerate daily<br><br>
+          <strong style="color:var(--accent2)">🔌 For live data sync (holdings, charges):</strong><br>
+          Run <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;color:var(--text)">node dhan-proxy-server.js</code> (included in download)<br>
+          This bypasses browser CORS. App auto-detects it at <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;color:var(--text)">localhost:3001</code>
         </div>
         <div style="display:flex;flex-direction:column;gap:1rem;">
           <div class="form-group">
@@ -1036,13 +1051,15 @@ function calcCharges(txnType, price, qty) {
   };
 }
 
-function renderChargesBreakdown(elementId, txnType, price, qty) {
+function renderChargesBreakdown(elementId, txnType, price, qty, actualTotalOverride) {
   const c = calcCharges(txnType, price, qty);
+  if (actualTotalOverride && actualTotalOverride > 0) c.total = actualTotalOverride;
   const el = document.getElementById(elementId);
   if (!el) return;
+  const fromDhan = actualTotalOverride > 0;
   el.innerHTML = `
-    <div style="font-size:0.68rem;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:0.5px;">
-      💸 CHARGES BREAKDOWN — ${txnType} ${qty} units @ ${fmt(price)} (Turnover: ${fmt(c.turnover)})
+    <div style="font-size:0.68rem;color:${fromDhan?'var(--green)':'var(--accent)'};font-weight:700;margin-bottom:8px;letter-spacing:0.5px;">
+      💸 ${fromDhan ? '✅ ACTUAL CHARGES FROM DHAN' : 'ESTIMATED CHARGES'} — ${txnType} ${qty} units @ ${fmt(price)} (Turnover: ${fmt(c.turnover)})
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
       <div style="padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;">
@@ -1073,9 +1090,9 @@ function renderChargesBreakdown(elementId, txnType, price, qty) {
         <div style="color:var(--muted);font-size:0.62rem;">DP Charges</div>
         <div style="font-family:'JetBrains Mono';font-size:0.78rem;">${fmt(c.dpCharge)}</div>
       </div>` : ''}
-      <div style="padding:6px 8px;background:rgba(255,69,96,0.1);border:1px solid rgba(255,69,96,0.25);border-radius:6px;">
-        <div style="color:var(--red);font-size:0.62rem;font-weight:700;">TOTAL</div>
-        <div style="font-family:'JetBrains Mono';font-size:0.82rem;font-weight:700;color:var(--red);">${fmt(c.total)}</div>
+      <div style="padding:6px 8px;background:${fromDhan?'rgba(0,227,150,0.1)':'rgba(255,69,96,0.1)'};border:1px solid ${fromDhan?'rgba(0,227,150,0.3)':'rgba(255,69,96,0.25)'};border-radius:6px;">
+        <div style="color:${fromDhan?'var(--green)':'var(--red)'};font-size:0.62rem;font-weight:700;">TOTAL${fromDhan?' (ACTUAL)':' (EST.)'}</div>
+        <div style="font-family:'JetBrains Mono';font-size:0.82rem;font-weight:700;color:${fromDhan?'var(--green)':'var(--red)'};">${fmt(c.total)}</div>
       </div>
     </div>
   `;
@@ -1515,75 +1532,215 @@ function openAvg(code) {
   document.getElementById('buyModal').classList.add('open');
 }
 
+// ═══════════════════════════════════════════════
+// DHAN REDIRECT — DEEP LINKS + AUTO-FETCH ON RETURN
+// ═══════════════════════════════════════════════
+
+// Track what order we're waiting on so we can auto-fetch when user returns
+let pendingDhanOrder = null; // { type:'BUY'|'SELL', symbol, expectedQty, openedAt }
+
+// Called when user switches back to this tab (from Dhan app/web)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && pendingDhanOrder) {
+    const waited = Date.now() - pendingDhanOrder.openedAt;
+    if (waited < 3000) return; // ignore if they came back too fast (< 3s)
+    autoFetchTradeFromDhan(pendingDhanOrder);
+  }
+});
+
+async function autoFetchTradeFromDhan(pending) {
+  if (!dhanState.connected || dhanState.proxyMode === 'none') return;
+  const today = new Date().toISOString().split('T')[0];
+  const statusEl = document.getElementById(pending.type === 'BUY' ? 'buyAutoFetchStatus' : 'dhanChargesFetchStatus');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.className = 'auto-fetch-status fetching';
+    statusEl.innerHTML = '⏳ Auto-fetching trade details from Dhan...';
+  }
+
+  try {
+    const trades = await dhanApiCall('GET', `/v2/trades/${today}/${today}/0`, null);
+    if (!Array.isArray(trades)) throw new Error('no trades');
+
+    // Find the most recent matching trade
+    const matched = trades
+      .filter(t => {
+        const sym = (t.tradingSymbol || '').replace('-EQ','');
+        return sym === pending.symbol && t.transactionType === pending.type;
+      })
+      .sort((a,b) => new Date(b.createTime||0) - new Date(a.createTime||0));
+
+    if (!matched.length) {
+      if (statusEl) {
+        statusEl.className = 'auto-fetch-status warn';
+        statusEl.innerHTML = '⚠️ No matching trade found yet. Did you complete the order? <button class="btn-sm btn-dhan" style="margin-left:8px" onclick="autoFetchTradeFromDhan(pendingDhanOrder)">Retry</button>';
+      }
+      return;
+    }
+
+    const t = matched[0];
+    const tradedPrice  = parseFloat(t.tradedPrice)    || parseFloat(t.price) || 0;
+    const tradedQty    = parseInt(t.tradedQuantity)   || parseInt(t.quantity) || 0;
+    const stt          = parseFloat(t.stt)                        || 0;
+    const brokerage    = parseFloat(t.brokerageCharges)           || 0;
+    const exchCharge   = parseFloat(t.exchangeTransactionCharges) || 0;
+    const sebi         = parseFloat(t.sebiTax)                    || 0;
+    const stamp        = parseFloat(t.stampDuty)                  || 0;
+    const gst          = parseFloat(t.serviceTax)                 || 0;
+    const dpCharge     = parseFloat(t.dpCharges)                  || 0;
+    const actualCharges = +(stt + brokerage + exchCharge + sebi + stamp + gst + dpCharge).toFixed(2);
+
+    if (pending.type === 'BUY') {
+      // Auto-fill buy modal
+      if (document.getElementById('modalPrice')) {
+        document.getElementById('modalPrice').value = tradedPrice;
+        document.getElementById('modalQty').value   = tradedQty;
+      }
+      if (statusEl) {
+        statusEl.className = 'auto-fetch-status success';
+        statusEl.innerHTML = `✅ Trade auto-fetched from Dhan! Price: ₹${tradedPrice} | Qty: ${tradedQty} | Charges: ₹${actualCharges} <span style="font-size:0.65rem;color:var(--muted)">(STT ₹${stt} + Brok ₹${brokerage} + Exch ₹${exchCharge} + SEBI ₹${sebi} + Stamp ₹${stamp} + GST ₹${gst})</span>`;
+      }
+      // Trigger live charges preview refresh
+      const p = parseFloat(document.getElementById('modalPrice')?.value)||0;
+      const q = parseInt(document.getElementById('modalQty')?.value)||0;
+      if (p && q) renderChargesBreakdown('buyChargesBreakdown','BUY',p,q, actualCharges);
+    } else {
+      // Auto-fill sell modal
+      if (document.getElementById('sellPrice')) {
+        document.getElementById('sellPrice').value = tradedPrice;
+      }
+      if (statusEl) {
+        statusEl.className = 'auto-fetch-status success';
+        statusEl.innerHTML = `✅ Trade auto-fetched! Sell Price: ₹${tradedPrice} | Qty: ${tradedQty} | Total Charges: ₹${actualCharges}`;
+      }
+      // Trigger sell summary update
+      const pos = sellPositionIdx !== null ? positions[sellPositionIdx] : null;
+      if (pos) {
+        const inv = totalInvested(pos);
+        const units = totalUnits(pos);
+        updateSellSummary(inv/units, units, inv, tradedPrice, pos.openDate, actualCharges);
+      }
+    }
+
+    // Store actual charges for when user confirms
+    pendingDhanOrder.actualCharges = actualCharges;
+    pendingDhanOrder.tradedPrice   = tradedPrice;
+    pendingDhanOrder.tradedQty     = tradedQty;
+
+  } catch(e) {
+    if (statusEl) {
+      statusEl.className = 'auto-fetch-status warn';
+      statusEl.innerHTML = '⚠️ Could not auto-fetch — proxy may not be running. Enter price manually.';
+    }
+  }
+}
+
+// Build Dhan deep link that opens directly to the buy/sell order ticket
+function buildDhanDeepLink(symbol, txnType, qty, price, secId) {
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad/i.test(navigator.userAgent);
+
+  // Dhan web order ticket URL — opens the scrip with order panel
+  // Format: https://web.dhan.co/scrip/NSE_EQ/{securityId}/{symbol}
+  const securityId = secId || DHAN_SECURITY_MAP[symbol] || '';
+  const webTicketUrl = securityId
+    ? `https://web.dhan.co/scrip/NSE_EQ/${securityId}/${symbol}?txnType=${txnType}&qty=${qty}&price=${price}&product=CNC`
+    : `https://web.dhan.co/search?q=${symbol}&txnType=${txnType}`;
+
+  if (isAndroid) {
+    // Android intent — tries Dhan app first, falls back to web
+    return `intent://dhan.co/scrip/NSE_EQ/${securityId}/${symbol}?txnType=${txnType}&qty=${qty}&price=${price}&product=CNC#Intent;scheme=https;package=co.dhan.app;S.browser_fallback_url=${encodeURIComponent(webTicketUrl)};end`;
+  } else if (isIOS) {
+    // iOS universal link — Dhan app intercepts if installed
+    return webTicketUrl; // Dhan's universal link config handles app redirect on iOS
+  } else {
+    return webTicketUrl;
+  }
+}
+
 function openDhanForBuy() {
   if (!selectedETF) return;
-  const code = selectedETF.code;
-  const qty  = document.getElementById('modalQty').value || '';
-  const price = document.getElementById('modalPrice').value || '';
+  const code  = selectedETF.code;
+  const qty   = parseInt(document.getElementById('modalQty').value) || 1;
+  const price = parseFloat(document.getElementById('modalPrice').value) || selectedETF.cmp;
+  const secId = DHAN_SECURITY_MAP[code] || '';
 
-  // Copy order details to clipboard so user can paste in Dhan
-  const orderText = `BUY ${qty} units of ${code} @ ₹${price} (CNC / Delivery)`;
-  navigator.clipboard.writeText(orderText).catch(()=>{});
+  pendingDhanOrder = { type: 'BUY', symbol: code, expectedQty: qty, openedAt: Date.now() };
 
-  // Dhan web ETF search URL  — opens the ETF directly in holdings/order panel
-  const url = `https://web.dhan.co/markets/ETFs`;
-  window.open(url, '_blank');
-  toast(`📋 Order details copied! Search "${code}" on Dhan and place CNC Buy`, 'info');
+  const link = buildDhanDeepLink(code, 'BUY', qty, price, secId);
+  window.open(link, '_blank');
 
-  // Show a reminder in the modal
-  document.getElementById('btnOpenDhan').textContent = '✅ Dhan Opened — Place order there';
+  document.getElementById('btnOpenDhan').innerHTML = '✅ Dhan Opened — Complete order there';
   document.getElementById('btnOpenDhan').style.background = 'var(--accent2)';
+
+  // Show auto-fetch status bar
+  const statusEl = document.getElementById('buyAutoFetchStatus');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.className = 'auto-fetch-status info';
+    statusEl.innerHTML = '👆 Complete your BUY order on Dhan, then switch back to this tab — details will auto-fill.';
+  }
+  toast(`🌐 Opened Dhan for ${code} — Will auto-fetch trade details when you return`, 'info');
 }
 
 function openDhanForSell() {
   if (sellPositionIdx === null) return;
-  const pos = positions[sellPositionIdx];
-  const units = totalUnits(pos);
-  const sp = document.getElementById('sellPrice').value || '';
-  const orderText = `SELL ${units} units of ${pos.etfCode} @ ₹${sp} (CNC / Delivery)`;
-  navigator.clipboard.writeText(orderText).catch(()=>{});
+  const pos    = positions[sellPositionIdx];
+  const units  = totalUnits(pos);
+  const price  = parseFloat(document.getElementById('sellPrice').value) || 0;
+  const secId  = DHAN_SECURITY_MAP[pos.etfCode] || '';
 
-  // Open Dhan web holdings page — user can sell directly from holdings
-  const url = `https://web.dhan.co/portfolio/holdings`;
-  window.open(url, '_blank');
-  toast(`📋 Order copied! Go to Holdings on Dhan, find ${pos.etfCode} and Sell`, 'info');
+  pendingDhanOrder = { type: 'SELL', symbol: pos.etfCode, expectedQty: units, openedAt: Date.now() };
 
-  document.getElementById('btnOpenDhanSell').textContent = '✅ Dhan Opened — Sell from Holdings';
+  const link = buildDhanDeepLink(pos.etfCode, 'SELL', units, price, secId);
+  window.open(link, '_blank');
+
+  document.getElementById('btnOpenDhanSell').innerHTML = '✅ Dhan Opened — Complete sell there';
   document.getElementById('btnOpenDhanSell').style.background = 'var(--accent)';
+
+  const statusEl = document.getElementById('dhanChargesFetchStatus');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.className = 'auto-fetch-status info';
+    statusEl.innerHTML = '👆 Complete your SELL order on Dhan, then switch back — price & charges will auto-fill.';
+  }
+  toast(`🌐 Opened Dhan for ${pos.etfCode} — Will auto-fetch when you return`, 'info');
 }
 
 function openDhanApp() {
-  // Universal link — opens Dhan app on mobile, Dhan web on desktop
   const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
   if (isMobile) {
-    // Try app deep link first, fall back to web
-    window.location.href = 'dhanapp://';
-    setTimeout(() => { window.open('https://dhan.co/app', '_blank'); }, 1200);
+    window.open('https://dhan.co/app', '_blank');
   } else {
-    window.open('https://web.dhan.co/portfolio/holdings', '_blank');
+    window.open('https://web.dhan.co', '_blank');
   }
 }
 
 function confirmBuy() {
   const price = parseFloat(document.getElementById('modalPrice').value);
-  const qty = parseInt(document.getElementById('modalQty').value);
-  const date = document.getElementById('modalDate').value;
-  const type = document.getElementById('modalType').value;
+  const qty   = parseInt(document.getElementById('modalQty').value);
+  const date  = document.getElementById('modalDate').value;
+  const type  = document.getElementById('modalType').value;
   if (!price || !qty) { toast('Enter actual traded price and quantity', 'error'); return; }
-  const charges = calcCharges('BUY', price, qty);
+
+  // Use actual charges from Dhan auto-fetch if available, else estimate
+  const dhanCharges    = pendingDhanOrder?.actualCharges || 0;
+  const estimated      = calcCharges('BUY', price, qty);
+  const charges        = dhanCharges > 0 ? dhanCharges : estimated.total;
+  const chargesFromDhan = dhanCharges > 0;
+
   const code = selectedETF.code;
   let pos = positions.find(p=>p.etfCode===code);
   if (!pos) {
     pos = { etfCode: code, lots: [], openDate: date };
     positions.push(pos);
   }
-  pos.lots.push({ price, qty, date, type, charges: charges.total, chargesDetail: charges });
+  pos.lots.push({ price, qty, date, type, charges, chargesFromDhan });
   saveState();
+  pendingDhanOrder = null;
 
-  // Try to fetch actual charges from Dhan tradebook (async, non-blocking)
-  if (dhanState.connected) fetchAndUpdateBuyCharges(code, date, pos.lots.length - 1);
-
-  toast(`✅ Logged: ${qty} units of ${code} @ ${fmt(price)} | Est. charges: ${fmt(charges.total)}`, 'success');
+  toast(`✅ Logged ${qty} × ${code} @ ${fmt(price)} | Charges: ${fmt(charges)}${chargesFromDhan?' (Dhan actual)':' (est.)'}`, 'success');
   closeModal('buyModal');
   renderDashboard();
   if (document.getElementById('portfolio').classList.contains('active')) renderPortfolio();
@@ -1627,7 +1784,7 @@ function openSell(idx) {
   document.getElementById('sellModal').classList.add('open');
 }
 
-function updateSellSummary(avgCost, units, invested, sellP, openDate) {
+function updateSellSummary(avgCost, units, invested, sellP, openDate, actualChargesOverride) {
   const sp = parseFloat(sellP) || 0;
   const grossPL = (sp - avgCost) * units;
   const plPct = ((sp - avgCost)/avgCost)*100;
@@ -1635,7 +1792,8 @@ function updateSellSummary(avgCost, units, invested, sellP, openDate) {
   const sellCharges = calcCharges('SELL', sp, units);
   const pos = sellPositionIdx !== null ? positions[sellPositionIdx] : null;
   const totalBuyCharges = pos ? pos.lots.reduce((s,l) => s + (l.charges||calcCharges('BUY',l.price,l.qty).total), 0) : 0;
-  const totalCharges = sellCharges.total + totalBuyCharges;
+  const fromDhan = actualChargesOverride > 0;
+  const totalCharges = fromDhan ? actualChargesOverride : (sellCharges.total + totalBuyCharges);
   const netPL = grossPL - totalCharges;
   const netRetPct = (netPL / invested) * 100;
 
@@ -1647,9 +1805,9 @@ function updateSellSummary(avgCost, units, invested, sellP, openDate) {
         <div style="color:var(--muted);font-size:0.62rem;">${fmtPct(plPct)} | ${days}d held</div>
       </div>
       <div>
-        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">EST. CHARGES</div>
-        <div style="color:var(--red);font-size:0.88rem;">${fmt(totalCharges)}</div>
-        <div style="color:var(--muted);font-size:0.62rem;">buy+sell combined</div>
+        <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">${fromDhan?'✅ ACTUAL CHARGES':'EST. CHARGES'}</div>
+        <div style="color:${fromDhan?'var(--green)':'var(--red)'};font-size:0.88rem;">${fmt(totalCharges)}</div>
+        <div style="color:var(--muted);font-size:0.62rem;">${fromDhan?'from Dhan tradebook':'buy+sell est.'}</div>
       </div>
       <div>
         <div style="color:var(--muted);font-size:0.62rem;margin-bottom:3px;">NET P&L</div>
@@ -1658,7 +1816,7 @@ function updateSellSummary(avgCost, units, invested, sellP, openDate) {
       </div>
     </div>
   `;
-  if (sp > 0) renderChargesBreakdown('sellChargesBreakdown', 'SELL', sp, units);
+  if (sp > 0) renderChargesBreakdown('sellChargesBreakdown', 'SELL', sp, units, fromDhan ? actualChargesOverride : 0);
 }
 
 async function fetchDhanChargesAndSell() {
@@ -1673,32 +1831,48 @@ async function fetchDhanChargesAndSell() {
   const avgCost = invested / units;
   const grossPL = (sp - avgCost) * units;
 
-  // Start with estimated charges
+  // Use auto-fetched data from visibilitychange if available
+  let chargesFromDhan = false;
   let totalCharges = calcCharges('SELL', sp, units).total +
     pos.lots.reduce((s,l) => s + (l.charges || calcCharges('BUY',l.price,l.qty).total), 0);
-  let chargesFromDhan = false;
 
   const statusEl = document.getElementById('dhanChargesFetchStatus');
 
-  if (dhanState.connected) {
-    statusEl.style.display = 'block';
-    statusEl.style.background = 'rgba(247,147,26,0.07)';
-    statusEl.style.color = 'var(--accent)';
-    statusEl.style.borderColor = 'rgba(247,147,26,0.25)';
-    statusEl.textContent = '⏳ Fetching actual charges from Dhan tradebook...';
-
+  // If auto-fetch already got charges (user came back from Dhan app), use those
+  if (pendingDhanOrder?.actualCharges > 0) {
+    totalCharges = pendingDhanOrder.actualCharges;
+    chargesFromDhan = true;
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.className = 'auto-fetch-status success';
+      statusEl.innerHTML = `✅ <strong>Real charges from Dhan (auto-fetched):</strong> ${fmt(totalCharges)}`;
+    }
+  } else if (dhanState.connected && dhanState.proxyMode === 'local') {
+    // Proxy available — fetch now
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.className = 'auto-fetch-status fetching';
+      statusEl.textContent = '⏳ Fetching actual charges from Dhan tradebook...';
+    }
     const actual = await fetchActualChargesFromDhan(pos.etfCode, pos.openDate || date, date);
     if (actual !== null) {
       totalCharges = actual;
       chargesFromDhan = true;
-      statusEl.style.background = 'rgba(0,227,150,0.07)';
-      statusEl.style.color = 'var(--green)';
-      statusEl.style.borderColor = 'rgba(0,227,150,0.25)';
-      statusEl.innerHTML = `✅ <strong>Real charges from Dhan:</strong> ${fmt(actual)} &nbsp;·&nbsp; <span style="font-size:0.65rem;">Includes STT + Brokerage + Exchange + SEBI + GST + Stamp + DP</span>`;
+      if (statusEl) {
+        statusEl.className = 'auto-fetch-status success';
+        statusEl.innerHTML = `✅ <strong>Real charges from Dhan:</strong> ${fmt(actual)} &nbsp;<span style="font-size:0.65rem;">(STT + Brokerage + Exchange + SEBI + GST + Stamp + DP)</span>`;
+      }
     } else {
-      statusEl.style.background = 'rgba(247,147,26,0.07)';
-      statusEl.style.color = 'var(--muted)';
-      statusEl.textContent = '⚠️ Trade not found in Dhan yet (may take a few minutes) — using calculated estimate';
+      if (statusEl) {
+        statusEl.className = 'auto-fetch-status warn';
+        statusEl.textContent = '⚠️ Trade not found in Dhan tradebook yet — using calculated estimate';
+      }
+    }
+  } else if (dhanState.connected && dhanState.proxyMode === 'none') {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.className = 'auto-fetch-status warn';
+      statusEl.textContent = '⚠️ No proxy — run dhan-proxy-server.js for live charge fetch. Using estimate.';
     }
   }
 
@@ -1716,6 +1890,7 @@ async function fetchDhanChargesAndSell() {
 
   positions.splice(sellPositionIdx, 1);
   saveState();
+  pendingDhanOrder = null;
   const chargeLabel = chargesFromDhan ? 'actual Dhan charges' : 'est. charges';
   toast(`✅ ${pos.etfCode} sold @ ${fmt(sp)} | Net: ${fmt(netPL)} (${chargeLabel}: ${fmt(totalCharges)})`, netPL>=0?'success':'error');
   closeModal('sellModal');
@@ -1732,7 +1907,7 @@ async function fetchDhanChargesAndSell() {
 async function fetchActualChargesFromDhan(symbol, fromDate, toDate) {
   try {
     // Dhan trades API: GET /v2/trades/{from-date}/{to-date}/{page}
-    const res = await dhanApiCall('GET', `https://api.dhan.co/v2/trades/${fromDate}/${toDate}/0`, null);
+    const res = await dhanApiCall('GET', `//v2/trades/${fromDate}/${toDate}/0`, null);
     if (!Array.isArray(res)) return null;
 
     // Match trades for this symbol (Dhan may return symbol with or without -EQ suffix)
@@ -1764,7 +1939,7 @@ async function fetchActualChargesFromDhan(symbol, fromDate, toDate) {
 // After a buy is logged, try to update charges from Dhan async
 async function fetchAndUpdateBuyCharges(etfCode, date, lotIdx) {
   try {
-    const res = await dhanApiCall('GET', `https://api.dhan.co/v2/trades/${date}/${date}/0`, null);
+    const res = await dhanApiCall('GET', `//v2/trades/${date}/${date}/0`, null);
     if (!Array.isArray(res)) return;
 
     const matched = res.filter(t =>
@@ -2032,8 +2207,43 @@ let dhanState = {
   holdings: [],
   orders: [],
   funds: null,
-  lastSync: null
+  lastSync: null,
+  proxyMode: 'detecting', // 'local' | 'direct' | 'none'
+  proxyBase: ''
 };
+
+// ── Proxy detection ──
+// Try local proxy first (dhan-proxy-server.js), then direct, then none
+async function detectProxy() {
+  // 1. Try local proxy
+  try {
+    const r = await fetch('http://localhost:3001/health', { signal: AbortSignal.timeout(1500) });
+    const d = await r.json();
+    if (d.status === 'ok') {
+      dhanState.proxyMode = 'local';
+      dhanState.proxyBase = 'http://localhost:3001/dhan';
+      updateProxyStatusBadge('🟢 Local Proxy Active', 'var(--green)');
+      console.log('[Dhan] Using local proxy at localhost:3001');
+      return;
+    }
+  } catch(e) {}
+
+  // 2. Try direct (works if IP is whitelisted by Dhan)
+  dhanState.proxyMode = 'none';
+  dhanState.proxyBase = '';
+  updateProxyStatusBadge('🔴 No Proxy — Run dhan-proxy-server.js', 'var(--red)');
+  console.log('[Dhan] No proxy available — CORS will block API calls');
+}
+
+function updateProxyStatusBadge(text, color) {
+  const el = document.getElementById('proxyStatusBadge');
+  if (el) { el.textContent = text; el.style.color = color; }
+}
+
+function dhanApiUrl(path) {
+  if (dhanState.proxyMode === 'local') return dhanState.proxyBase + path;
+  return 'https://api.dhan.co' + path;
+}
 
 function dhanLoadCredentials() {
   try {
@@ -2059,9 +2269,10 @@ function updateDhanStatusUI(connected) {
   const btnD = document.getElementById('btnDisconnect');
   if (connected) {
     bar.className = 'dhan-status-bar connected';
-    txt.textContent = `✅ Connected — Client ID: ${dhanState.clientId}`;
+    txt.innerHTML = `✅ Connected — Client ID: ${dhanState.clientId} &nbsp;<span id="proxyStatusBadge" style="font-size:0.68rem;margin-left:8px;font-family:'JetBrains Mono';">⏳ Detecting proxy...</span>`;
     btnR.style.display = 'inline-block';
     btnD.style.display = 'inline-block';
+    detectProxy(); // async — updates badge when done
   } else {
     bar.className = 'dhan-status-bar disconnected';
     txt.textContent = 'Not connected to Dhan';
@@ -2075,41 +2286,41 @@ function dhanConnect() {
   const token = document.getElementById('dhanToken').value.trim();
   if (!clientId || !token) { toast('Enter Client ID and Access Token', 'error'); return; }
 
-  const bar = document.getElementById('dhanStatusBar');
-  bar.className = 'dhan-status-bar connecting';
-  document.getElementById('dhanStatusText').textContent = 'Connecting...';
-
   dhanState.clientId = clientId;
   dhanState.token = token;
 
-  // Test connection by fetching funds
-  dhanApiCall('GET', 'https://api.dhan.co/v2/fundlimit', null)
-    .then(data => {
-      if (data && !data.errorType) {
+  document.getElementById('dhanStatusBar').className = 'dhan-status-bar connecting';
+  document.getElementById('dhanStatusText').textContent = '⏳ Detecting proxy & connecting...';
+
+  detectProxy().then(() => {
+    dhanApiCall('GET', '/v2/fundlimit', null)
+      .then(data => {
+        if (data && !data.errorType) {
+          dhanState.connected = true;
+          dhanState.funds = data;
+          localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token }));
+          updateDhanStatusUI(true);
+          renderDhanFunds(data);
+          dhanFetchHoldings();
+          dhanFetchOrders();
+          toast('✅ Connected to Dhan via ' + (dhanState.proxyMode === 'local' ? 'local proxy' : 'direct'), 'success');
+        } else throw new Error(data?.errorMessage || 'Auth failed');
+      })
+      .catch(() => {
+        // Save credentials anyway — user can still use redirect flow
         dhanState.connected = true;
-        dhanState.funds = data;
         localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token }));
         updateDhanStatusUI(true);
-        renderDhanFunds(data);
-        dhanFetchHoldings();
-        dhanFetchOrders();
-        toast('✅ Connected to Dhan successfully!', 'success');
-      } else {
-        throw new Error(data?.errorMessage || 'Auth failed');
-      }
-    })
-    .catch(err => {
-      // CORS error means credentials might be valid but browser blocks it
-      // Treat as connected with manual mode
-      dhanState.connected = true;
-      localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token }));
-      updateDhanStatusUI(true);
-      toast('⚠️ CORS restriction detected. Order placement will use Dhan web redirect mode.', 'info');
-      renderDhanAccountCorsMode();
-    });
+        if (dhanState.proxyMode === 'none') {
+          renderDhanAccountCorsMode();
+          toast('⚠️ Credentials saved. Run dhan-proxy-server.js to enable live data sync.', 'info');
+        }
+      });
+  });
 }
 
-function dhanApiCall(method, url, body) {
+function dhanApiCall(method, path, body) {
+  const url = dhanApiUrl(path);
   return fetch(url, {
     method,
     headers: {
@@ -2119,7 +2330,7 @@ function dhanApiCall(method, url, body) {
     },
     body: body ? JSON.stringify(body) : undefined
   }).then(r => r.json()).catch(err => {
-    console.warn('Dhan API call failed (likely CORS):', err);
+    console.warn('Dhan API call failed:', err.message || err);
     throw err;
   });
 }
@@ -2127,7 +2338,7 @@ function dhanApiCall(method, url, body) {
 function renderDhanAccountCorsMode() {
   document.getElementById('dhanAccountInfo').innerHTML = `
     <div style="padding:1rem;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:10px;font-size:0.78rem;line-height:1.8;">
-      <div style="font-weight:700;color:var(--accent);margin-bottom:8px;">⚠️ CORS Restriction Mode</div>
+      <div style="font-weight:700;color:var(--accent);margin-bottom:8px;">⚠️ No Local Proxy Detected</div>
       <div style="color:var(--muted);">
         Direct API calls are blocked by browser security (CORS). Your credentials are saved.<br><br>
         <strong style="color:var(--text);">What works:</strong> Order placement via <strong>Dhan web redirect</strong> — 
@@ -2166,7 +2377,7 @@ function renderDhanFunds(data) {
 
 function dhanFetchHoldings() {
   if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
-  dhanApiCall('GET', 'https://api.dhan.co/v2/holdings', null)
+  dhanApiCall('GET', '/v2/holdings', null)
     .then(data => {
       if (Array.isArray(data)) {
         dhanState.holdings = data;
@@ -2261,7 +2472,7 @@ function importHoldingsToPortfolio() {
 
 function dhanFetchOrders() {
   if (!dhanState.connected) return;
-  dhanApiCall('GET', 'https://api.dhan.co/v2/orders', null)
+  dhanApiCall('GET', '/v2/orders', null)
     .then(data => {
       if (Array.isArray(data)) {
         dhanState.orders = data;
@@ -2318,7 +2529,7 @@ async function dhanFetchTradebook() {
   const to = document.getElementById('dhanFetchTo').value || from;
   const result = document.getElementById('dhanDataResult');
   result.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem;">⏳ Fetching tradebook...</div>';
-  dhanApiCall('GET', `https://api.dhan.co/v2/trades/${from}/${to}/0`, null)
+  dhanApiCall('GET', `//v2/trades/${from}/${to}/0`, null)
     .then(data => {
       if (!Array.isArray(data)) throw new Error('No data');
       // Filter ETF trades only
@@ -2349,7 +2560,7 @@ async function dhanFetchLedger() {
   const to = document.getElementById('dhanFetchTo').value || from;
   const result = document.getElementById('dhanDataResult');
   result.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem;">⏳ Fetching ledger...</div>';
-  dhanApiCall('GET', `https://api.dhan.co/v2/ledger?from-date=${from}&to-date=${to}`, null)
+  dhanApiCall('GET', `//v2/ledger?from-date=${from}&to-date=${to}`, null)
     .then(data => {
       if (!Array.isArray(data)) throw new Error();
       const chargeKeywords = ['STT','BROKERAGE','TRANSACTION','EXCHANGE','STAMP','GST','DP CHAR','SEBI'];
@@ -2376,7 +2587,7 @@ async function dhanFetchLedger() {
 async function dhanFetchFunds() {
   if (!dhanState.connected) { toast('Connect Dhan first', 'error'); return; }
   const result = document.getElementById('dhanDataResult');
-  dhanApiCall('GET', 'https://api.dhan.co/v2/fundlimit', null)
+  dhanApiCall('GET', '/v2/fundlimit', null)
     .then(data => {
       if (data && !data.errorType) {
         renderDhanFunds(data);
