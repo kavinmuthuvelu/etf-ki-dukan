@@ -353,6 +353,26 @@
   .order-status.REJECTED { background: rgba(255,69,96,0.15); border: 1px solid rgba(255,69,96,0.3); color: var(--red); }
   .order-status.CANCELLED { background: rgba(107,122,158,0.15); border: 1px solid rgba(107,122,158,0.3); color: var(--muted); }
 
+  /* ── FLOATING ORDER REMINDER BADGE ── */
+  #orderReminderBadge {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: var(--bg2); border: 2px solid var(--accent2);
+    border-radius: 16px; padding: 16px 18px; min-width: 290px; max-width: 320px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.65); display: none;
+    font-size: 0.78rem; animation: slideInRight 0.3s ease;
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  #orderReminderBadge .orb-title   { font-size:0.63rem; font-weight:800; letter-spacing:1.2px; margin-bottom:10px; text-transform:uppercase; }
+  #orderReminderBadge .orb-step    { display:flex; align-items:flex-start; gap:8px; margin-bottom:8px; font-size:0.72rem; color:var(--muted); line-height:1.4; }
+  #orderReminderBadge .orb-step-num{ min-width:20px; height:20px; border-radius:50%; background:var(--bg3); border:1px solid rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700; color:var(--text); flex-shrink:0; margin-top:1px; }
+  #orderReminderBadge .orb-val     { font-family:'JetBrains Mono'; font-weight:700; font-size:0.88rem; }
+  #orderReminderBadge .orb-copy    { padding:4px 10px; background:var(--accent2); color:var(--bg); border-radius:5px; font-size:0.66rem; font-weight:700; cursor:pointer; border:none; margin-left:6px; vertical-align:middle; }
+  #orderReminderBadge .orb-dismiss { float:right; background:none; border:none; color:var(--muted); cursor:pointer; font-size:1rem; padding:0; }
+  #orderReminderBadge .orb-copied  { color:var(--green); font-size:0.63rem; display:none; margin-left:4px; }
+
   /* ── AUTO-FETCH STATUS ── */
   .auto-fetch-status {
     padding: 10px 14px; border-radius: 10px; font-size: 0.75rem;
@@ -454,13 +474,13 @@
     <!-- Dhan redirect instruction -->
     <div style="padding:1rem;background:rgba(0,212,170,0.07);border:1px solid rgba(0,212,170,0.25);border-radius:12px;margin-bottom:1rem;">
       <div style="font-size:0.72rem;color:var(--accent2);font-weight:700;margin-bottom:8px;">🚀 STEP 1 — Place order on Dhan</div>
-      <div style="font-size:0.74rem;color:var(--muted);margin-bottom:10px;">Click below to open Dhan web with this ETF pre-searched. Place your CNC buy order there, then come back and confirm below.</div>
+      <div style="font-size:0.74rem;color:var(--muted);margin-bottom:10px;">Opens Dhan Web and <strong style="color:var(--text)">copies the ETF symbol to your clipboard</strong>. Paste it in Dhan's search box → open the ETF → click <strong style="color:var(--text)">Buy</strong> → Investing tab → enter Qty &amp; Price from the cheat-sheet that appears bottom-right.</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-primary" id="btnOpenDhan" onclick="openDhanForBuy()" style="flex:1;min-width:160px;">
-          🌐 Open Dhan Web to Buy
+          🌐 Open Dhan + Copy Symbol
         </button>
         <button class="btn-sm btn-dhan" onclick="openDhanApp()" style="padding:9px 16px;">
-          📱 Open Dhan App
+          📱 Dhan App
         </button>
       </div>
     </div>
@@ -500,7 +520,7 @@
     <!-- Dhan redirect -->
     <div style="padding:1rem;background:rgba(255,69,96,0.07);border:1px solid rgba(255,69,96,0.25);border-radius:12px;margin-bottom:1rem;">
       <div style="font-size:0.72rem;color:var(--red);font-weight:700;margin-bottom:8px;">🚀 STEP 1 — Place sell order on Dhan</div>
-      <div style="font-size:0.74rem;color:var(--muted);margin-bottom:10px;">Click below to open Dhan web with this ETF. Place your CNC sell order there, then come back and confirm below.</div>
+      <div style="font-size:0.74rem;color:var(--muted);margin-bottom:10px;">Opens Dhan Web and <strong style="color:var(--text)">copies the ETF symbol to clipboard</strong>. Paste in Dhan's search → open ETF → click <strong style="color:var(--text)">Sell</strong> → Investing tab → enter values from cheat-sheet (bottom-right).</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-primary" id="btnOpenDhanSell" onclick="openDhanForSell()" style="flex:1;min-width:160px;background:var(--red);">
           🌐 Open Dhan Web to Sell
@@ -523,6 +543,45 @@
       </button>
       <button class="btn-cancel" onclick="closeModal('sellModal')">Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- FLOATING ORDER REMINDER BADGE -->
+<div id="orderReminderBadge">
+  <button class="orb-dismiss" onclick="dismissOrderBadge()" style="float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;">✕</button>
+  <div class="orb-title" id="orbTitle" style="color:var(--accent2);">PENDING BUY ORDER</div>
+
+  <!-- Step 1 -->
+  <div class="orb-step">
+    <div class="orb-step-num">1</div>
+    <div>On <strong style="color:var(--text)">Dhan</strong>, search for <strong id="orbSymbol" style="color:var(--accent2);font-family:'JetBrains Mono';">—</strong> and click on it</div>
+  </div>
+  <!-- Step 2 -->
+  <div class="orb-step">
+    <div class="orb-step-num">2</div>
+    <div>Click the <strong id="orbTxnLabel" style="color:var(--accent2)">BUY</strong> button → select <strong style="color:var(--text)">Investing</strong> tab → set <strong style="color:var(--text)">Limit</strong></div>
+  </div>
+  <!-- Step 3 -->
+  <div class="orb-step">
+    <div class="orb-step-num" style="background:rgba(0,212,170,0.15);border-color:rgba(0,212,170,0.4);">3</div>
+    <div>
+      Enter Qty: <span class="orb-val" id="orbQty" style="color:var(--text)">—</span>
+      <button class="orb-copy" onclick="copyFieldToClipboard('qty')">📋 Copy</button>
+      <span class="orb-copied" id="orbQtyCopied">✓</span>
+      <br>Price: <span class="orb-val" id="orbPrice" style="color:var(--accent2)">—</span>
+      <button class="orb-copy" onclick="copyFieldToClipboard('price')">📋 Copy</button>
+      <span class="orb-copied" id="orbPriceCopied">✓</span>
+    </div>
+  </div>
+  <!-- Step 4 -->
+  <div class="orb-step">
+    <div class="orb-step-num">4</div>
+    <div>Product: <strong style="color:var(--text)">CNC</strong> (Delivery / Investing tab = same thing)</div>
+  </div>
+  <!-- Step 5 -->
+  <div class="orb-step" style="color:var(--accent2);">
+    <div class="orb-step-num" style="background:rgba(0,212,170,0.15);border-color:rgba(0,212,170,0.4);">5</div>
+    <div>After placing — <strong>switch back to this tab</strong>. Trade details will auto-fill ✅</div>
   </div>
 </div>
 
@@ -1543,7 +1602,8 @@ let pendingDhanOrder = null; // { type:'BUY'|'SELL', symbol, expectedQty, opened
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && pendingDhanOrder) {
     const waited = Date.now() - pendingDhanOrder.openedAt;
-    if (waited < 3000) return; // ignore if they came back too fast (< 3s)
+    if (waited < 3000) return;
+    dismissOrderBadge(); // hide the reminder — they're back
     autoFetchTradeFromDhan(pendingDhanOrder);
   }
 });
@@ -1635,28 +1695,61 @@ async function autoFetchTradeFromDhan(pending) {
   }
 }
 
-// Build Dhan deep link that opens directly to the buy/sell order ticket
-function buildDhanDeepLink(symbol, txnType, qty, price, secId) {
-  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+// Dhan has no public URL scheme to open a specific scrip or order ticket.
+// Best we can do: open web.dhan.co (already logged in) and auto-copy the symbol.
+function buildDhanDeepLink(symbol, txnType) {
   const isAndroid = /Android/i.test(navigator.userAgent);
-  const isIOS = /iPhone|iPad/i.test(navigator.userAgent);
-
-  // Dhan web order ticket URL — opens the scrip with order panel
-  // Format: https://web.dhan.co/scrip/NSE_EQ/{securityId}/{symbol}
-  const securityId = secId || DHAN_SECURITY_MAP[symbol] || '';
-  const webTicketUrl = securityId
-    ? `https://web.dhan.co/scrip/NSE_EQ/${securityId}/${symbol}?txnType=${txnType}&qty=${qty}&price=${price}&product=CNC`
-    : `https://web.dhan.co/search?q=${symbol}&txnType=${txnType}`;
-
   if (isAndroid) {
-    // Android intent — tries Dhan app first, falls back to web
-    return `intent://dhan.co/scrip/NSE_EQ/${securityId}/${symbol}?txnType=${txnType}&qty=${qty}&price=${price}&product=CNC#Intent;scheme=https;package=co.dhan.app;S.browser_fallback_url=${encodeURIComponent(webTicketUrl)};end`;
-  } else if (isIOS) {
-    // iOS universal link — Dhan app intercepts if installed
-    return webTicketUrl; // Dhan's universal link config handles app redirect on iOS
-  } else {
-    return webTicketUrl;
+    // On Android: intent to open Dhan app, fall back to web
+    return `intent://dhan.co#Intent;scheme=https;package=co.dhan.app;S.browser_fallback_url=${encodeURIComponent('https://web.dhan.co')};end`;
   }
+  // Desktop / iOS: just open Dhan web — user searches using the copied symbol
+  return 'https://web.dhan.co';
+}
+
+let _pendingQty = 0;
+let _pendingPrice = 0;
+
+function showOrderReminderBadge(txnType, symbol, qty, price) {
+  _pendingQty   = qty;
+  _pendingPrice = price;
+  const badge = document.getElementById('orderReminderBadge');
+  const isBuy = txnType === 'BUY';
+  const color = isBuy ? 'var(--accent2)' : 'var(--red)';
+
+  badge.style.borderColor = color;
+  document.getElementById('orbTitle').textContent  = `PENDING ${txnType} ORDER — ${symbol}`;
+  document.getElementById('orbTitle').style.color  = color;
+  document.getElementById('orbSymbol').textContent = symbol;
+  document.getElementById('orbSymbol').style.color = color;
+  document.getElementById('orbTxnLabel').textContent = txnType;
+  document.getElementById('orbTxnLabel').style.color  = color;
+  document.getElementById('orbQty').textContent   = qty + ' units';
+  document.getElementById('orbPrice').textContent = '₹' + price;
+  badge.style.display = 'block';
+  badge.style.animation = 'none';
+  void badge.offsetWidth; // reflow to restart animation
+  badge.style.animation = 'slideInRight 0.3s ease';
+}
+
+function copyFieldToClipboard(field) {
+  const val = field === 'qty' ? String(_pendingQty) : String(_pendingPrice);
+  const copiedId = field === 'qty' ? 'orbQtyCopied' : 'orbPriceCopied';
+  navigator.clipboard.writeText(val).then(() => {
+    const el = document.getElementById(copiedId);
+    if (el) {
+      el.style.display = 'inline';
+      setTimeout(() => { el.style.display = 'none'; }, 2000);
+    }
+  }).catch(() => {});
+}
+
+function copyQtyToClipboard() {
+  copyFieldToClipboard('qty');
+}
+
+function dismissOrderBadge() {
+  document.getElementById('orderReminderBadge').style.display = 'none';
 }
 
 function openDhanForBuy() {
@@ -1664,24 +1757,24 @@ function openDhanForBuy() {
   const code  = selectedETF.code;
   const qty   = parseInt(document.getElementById('modalQty').value) || 1;
   const price = parseFloat(document.getElementById('modalPrice').value) || selectedETF.cmp;
-  const secId = DHAN_SECURITY_MAP[code] || '';
 
   pendingDhanOrder = { type: 'BUY', symbol: code, expectedQty: qty, openedAt: Date.now() };
 
-  const link = buildDhanDeepLink(code, 'BUY', qty, price, secId);
-  window.open(link, '_blank');
+  // Auto-copy symbol — user just pastes it in Dhan's search box
+  navigator.clipboard.writeText(code).catch(() => {});
 
-  document.getElementById('btnOpenDhan').innerHTML = '✅ Dhan Opened — Complete order there';
+  window.open(buildDhanDeepLink(code, 'BUY'), '_blank');
+  showOrderReminderBadge('BUY', code, qty, price);
+
+  document.getElementById('btnOpenDhan').innerHTML = `✅ Dhan Opened — "${code}" copied, paste in search`;
   document.getElementById('btnOpenDhan').style.background = 'var(--accent2)';
 
-  // Show auto-fetch status bar
   const statusEl = document.getElementById('buyAutoFetchStatus');
   if (statusEl) {
     statusEl.style.display = 'block';
     statusEl.className = 'auto-fetch-status info';
-    statusEl.innerHTML = '👆 Complete your BUY order on Dhan, then switch back to this tab — details will auto-fill.';
+    statusEl.innerHTML = `📋 <strong>${code}</strong> copied to clipboard — paste (Ctrl+V) in Dhan search box, open the ETF, click Buy. See cheat-sheet (bottom-right corner) for exact values.`;
   }
-  toast(`🌐 Opened Dhan for ${code} — Will auto-fetch trade details when you return`, 'info');
 }
 
 function openDhanForSell() {
@@ -1689,29 +1782,30 @@ function openDhanForSell() {
   const pos    = positions[sellPositionIdx];
   const units  = totalUnits(pos);
   const price  = parseFloat(document.getElementById('sellPrice').value) || 0;
-  const secId  = DHAN_SECURITY_MAP[pos.etfCode] || '';
 
   pendingDhanOrder = { type: 'SELL', symbol: pos.etfCode, expectedQty: units, openedAt: Date.now() };
 
-  const link = buildDhanDeepLink(pos.etfCode, 'SELL', units, price, secId);
-  window.open(link, '_blank');
+  // Auto-copy symbol
+  navigator.clipboard.writeText(pos.etfCode).catch(() => {});
 
-  document.getElementById('btnOpenDhanSell').innerHTML = '✅ Dhan Opened — Complete sell there';
+  window.open(buildDhanDeepLink(pos.etfCode, 'SELL'), '_blank');
+  showOrderReminderBadge('SELL', pos.etfCode, units, price);
+
+  document.getElementById('btnOpenDhanSell').innerHTML = `✅ Dhan Opened — "${pos.etfCode}" copied, paste in search`;
   document.getElementById('btnOpenDhanSell').style.background = 'var(--accent)';
 
   const statusEl = document.getElementById('dhanChargesFetchStatus');
   if (statusEl) {
     statusEl.style.display = 'block';
     statusEl.className = 'auto-fetch-status info';
-    statusEl.innerHTML = '👆 Complete your SELL order on Dhan, then switch back — price & charges will auto-fill.';
+    statusEl.innerHTML = `📋 <strong>${pos.etfCode}</strong> copied — paste in Dhan search, open the ETF, click Sell. Cheat-sheet (bottom-right) has Qty &amp; Price. Switch back after placing.`;
   }
-  toast(`🌐 Opened Dhan for ${pos.etfCode} — Will auto-fetch when you return`, 'info');
 }
 
 function openDhanApp() {
-  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    window.open('https://dhan.co/app', '_blank');
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    window.location.href = 'intent://dhan.co#Intent;scheme=https;package=co.dhan.app;S.browser_fallback_url=' + encodeURIComponent('https://web.dhan.co') + ';end';
   } else {
     window.open('https://web.dhan.co', '_blank');
   }
