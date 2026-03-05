@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: etf-ki-dukan
+    runtime: node
+    plan: free
+
+    # Build
+    buildCommand: "npm install --omit=dev"
+    startCommand: "node server.js"
+
+    # Health check — Render uses this to verify the service is up
+    healthCheckPath: /health
+
+    # Auto-deploy on push to main branch
+    autoDeploy: true
+
+    envVars:
+      # Render sets PORT and RENDER automatically — do not override PORT here
+      - key: NODE_ENV
+        value: production
