@@ -1268,6 +1268,20 @@
     </div>
   </div>
 
+  <!-- 30-Day Performance Tracking -->
+  <div class="panel" style="margin-top:1rem;" id="dailyTrackingPanel">
+    <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <span class="panel-title">📈 30-Day Portfolio Performance</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="snapshotAvgBadge" style="font-size:0.72rem;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--muted);">avg: —</span>
+        <button class="btn-sm btn-dhan" onclick="takeSnapshot()" title="Save today's P&L snapshot">📸 Snapshot Now</button>
+      </div>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      <div id="dailyTrackingTable" style="overflow-x:auto;"></div>
+    </div>
+  </div>
+
   <!-- Danger Zone -->
   <div class="panel" style="margin-top:1rem;border-color:rgba(255,69,96,0.2);">
     <div class="panel-header" style="border-bottom-color:rgba(255,69,96,0.15);">
@@ -1622,15 +1636,200 @@ function loadState() {
     const s = localStorage.getItem('etfkidukan_state');
     if (s) {
       const d = JSON.parse(s);
-      positions = d.positions || [];
+      positions    = d.positions    || [];
       closedTrades = d.closedTrades || [];
-      config = { ...config, ...(d.config || {}) };
+      config       = { ...config, ...(d.config || {}) };
+      dailySnapshots = d.dailySnapshots || [];
     }
   } catch(e) {}
 }
 
+// ═══════════════════════════════════════════════
+// 30-DAY DAILY TRACKING
+// ═══════════════════════════════════════════════
+
+function calcPortfolioTotals() {
+  const invested = positions.reduce((s,p) => s + totalInvested(p), 0);
+  const unrealised = positions.reduce((s,p) => {
+    const etf = ETF_DATA.find(e => e.code === p.etfCode);
+    if (!etf || !etf.cmp) return s;
+    const avgCost = totalInvested(p) / totalUnits(p);
+    return s + (etf.cmp - avgCost) * totalUnits(p);
+  }, 0);
+  const realised = closedTrades.reduce((s,t) => s + (t.pl || 0), 0);
+  const totalPL  = unrealised + realised;
+  const pct      = invested > 0 ? (totalPL / invested) * 100 : 0;
+  return { invested, unrealised, realised, totalPL, pct };
+}
+
+// Auto-snapshot: takes one snapshot per calendar day (skips if already done today)
+function autoSnapshot() {
+  const today = new Date().toISOString().split('T')[0];
+  const already = dailySnapshots.some(s => s.date === today);
+  if (!already && positions.length > 0) {
+    takeSnapshotForDate(today);
+  }
+}
+
+// Manual snapshot button — updates today's entry or adds it
+function takeSnapshot() {
+  const today = new Date().toISOString().split('T')[0];
+  takeSnapshotForDate(today);
+  toast('📸 Snapshot saved for ' + today, 'success');
+  renderDailyTracking();
+}
+
+function takeSnapshotForDate(date) {
+  const totals = calcPortfolioTotals();
+  if (totals.invested === 0) return; // nothing to track
+  const entry = { date, ...totals, ts: Date.now() };
+  const idx = dailySnapshots.findIndex(s => s.date === date);
+  if (idx >= 0) dailySnapshots[idx] = entry; // update today's
+  else dailySnapshots.push(entry);
+  // Keep only last 30 unique days, newest first
+  dailySnapshots = dailySnapshots
+    .sort((a,b) => b.date.localeCompare(a.date))
+    .slice(0, 30);
+  saveState();
+}
+
+function renderDailyTracking() {
+  const el = document.getElementById('dailyTrackingTable');
+  const badge = document.getElementById('snapshotAvgBadge');
+  if (!el) return;
+
+  if (!dailySnapshots.length) {
+    el.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--muted);font-size:0.78rem;">
+      No snapshots yet.<br>Open this tab each day to auto-record your portfolio P&amp;L, or click 📸 Snapshot Now.
+    </div>`;
+    if (badge) { badge.textContent = 'avg: —'; badge.style.color = 'var(--muted)'; }
+    return;
+  }
+
+  // Sort newest first for display
+  const rows = [...dailySnapshots].sort((a,b) => b.date.localeCompare(a.date));
+
+  // Day-over-day delta % — compare today's totalPL% to previous day's
+  // Compute 30-day averages
+  const avgPct       = rows.reduce((s,r) => s + r.pct, 0) / rows.length;
+  const avgUnreal    = rows.reduce((s,r) => s + r.unrealised, 0) / rows.length;
+  const avgTotal     = rows.reduce((s,r) => s + r.totalPL, 0) / rows.length;
+  const positiveDays = rows.filter(r => r.pct >= 0).length;
+  const negativeDays = rows.filter(r => r.pct < 0).length;
+
+  if (badge) {
+    const avgColor = avgPct >= 0 ? 'var(--green)' : 'var(--red)';
+    badge.textContent = 'avg: ' + (avgPct >= 0 ? '+' : '') + avgPct.toFixed(2) + '%';
+    badge.style.color = avgColor;
+    badge.style.background = avgPct >= 0 ? 'rgba(0,212,170,0.1)' : 'rgba(255,69,96,0.1)';
+  }
+
+  // Build table
+  let html = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.73rem;">
+      <thead>
+        <tr style="background:var(--bg3);position:sticky;top:0;z-index:1;">
+          <th style="padding:8px 14px;text-align:left;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">DATE</th>
+          <th style="padding:8px 14px;text-align:right;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">INVESTED</th>
+          <th style="padding:8px 14px;text-align:right;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">UNREALISED</th>
+          <th style="padding:8px 14px;text-align:right;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">REALISED</th>
+          <th style="padding:8px 14px;text-align:right;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">TOTAL P&amp;L</th>
+          <th style="padding:8px 14px;text-align:right;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">P&amp;L %</th>
+          <th style="padding:8px 14px;text-align:right;font-size:0.65rem;color:var(--muted);font-weight:600;white-space:nowrap;">DAY CHANGE</th>
+          <th style="padding:8px 6px;text-align:center;font-size:0.65rem;color:var(--muted);font-weight:600;"></th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  rows.forEach((r, i) => {
+    // Day-over-day change in % (compare this row's pct to next row = previous day)
+    const prevRow   = rows[i + 1];
+    const dayDelta  = prevRow != null ? r.pct - prevRow.pct : null;
+    const dayDeltaHtml = dayDelta != null
+      ? `<span style="color:${dayDelta >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;">
+           ${dayDelta >= 0 ? '▲' : '▼'} ${Math.abs(dayDelta).toFixed(2)}%
+         </span>`
+      : '<span style="color:var(--muted);">—</span>';
+
+    const pctColor  = r.pct >= 0 ? 'var(--green)' : 'var(--red)';
+    const plColor   = r.totalPL >= 0 ? 'var(--green)' : 'var(--red)';
+    const urColor   = r.unrealised >= 0 ? 'var(--green)' : 'var(--red)';
+
+    // Mini bar — width proportional to pct within the range seen
+    const maxPct   = Math.max(...rows.map(x => Math.abs(x.pct)), 0.01);
+    const barWidth = Math.min(Math.abs(r.pct) / maxPct * 60, 60);
+    const barColor = r.pct >= 0 ? 'rgba(0,212,170,0.35)' : 'rgba(255,69,96,0.35)';
+
+    const isToday  = r.date === new Date().toISOString().split('T')[0];
+    const rowBg    = isToday ? 'rgba(0,212,170,0.04)' : '';
+
+    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);background:${rowBg};" 
+               onmouseover="this.style.background='rgba(255,255,255,0.03)'" 
+               onmouseout="this.style.background='${rowBg}'">
+      <td style="padding:8px 14px;color:${isToday ? 'var(--accent2)' : 'var(--text)'};font-family:'JetBrains Mono';white-space:nowrap;font-weight:${isToday?'700':'400'};">
+        ${r.date}${isToday ? ' <span style="font-size:0.6rem;background:rgba(0,212,170,0.15);color:var(--accent2);padding:1px 5px;border-radius:4px;">TODAY</span>' : ''}
+      </td>
+      <td style="padding:8px 14px;text-align:right;font-family:'JetBrains Mono';color:var(--text);">₹${fmt(r.invested)}</td>
+      <td style="padding:8px 14px;text-align:right;font-family:'JetBrains Mono';color:${urColor};">${r.unrealised >= 0 ? '+' : ''}₹${fmt(r.unrealised)}</td>
+      <td style="padding:8px 14px;text-align:right;font-family:'JetBrains Mono';color:${r.realised >= 0 ? 'var(--green)' : 'var(--red)'};">${r.realised >= 0 ? '+' : ''}₹${fmt(r.realised)}</td>
+      <td style="padding:8px 14px;text-align:right;font-family:'JetBrains Mono';color:${plColor};font-weight:600;">${r.totalPL >= 0 ? '+' : ''}₹${fmt(r.totalPL)}</td>
+      <td style="padding:8px 14px;text-align:right;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+          <div style="width:${barWidth}px;height:6px;background:${barColor};border-radius:3px;min-width:2px;"></div>
+          <span style="color:${pctColor};font-weight:700;font-family:'JetBrains Mono';">${r.pct >= 0 ? '+' : ''}${r.pct.toFixed(2)}%</span>
+        </div>
+      </td>
+      <td style="padding:8px 14px;text-align:right;">${dayDeltaHtml}</td>
+      <td style="padding:8px 6px;text-align:center;">
+        <button onclick="deleteSnapshot('${r.date}')" title="Delete this snapshot"
+          style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.72rem;padding:2px 4px;opacity:0.5;"
+          onmouseover="this.style.opacity='1';this.style.color='var(--red)'"
+          onmouseout="this.style.opacity='0.5';this.style.color='var(--muted)'">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  // ── Summary / Average row ──────────────────────────────────────────────────
+  const avgPctColor = avgPct >= 0 ? 'var(--green)' : 'var(--red)';
+  const avgTotalColor = avgTotal >= 0 ? 'var(--green)' : 'var(--red)';
+  html += `</tbody>
+    <tfoot>
+      <tr style="background:var(--bg3);border-top:2px solid rgba(255,255,255,0.1);">
+        <td style="padding:10px 14px;font-weight:700;color:var(--text);font-size:0.72rem;">
+          30-DAY AVG <span style="font-weight:400;color:var(--muted);">(${rows.length} days)</span>
+        </td>
+        <td style="padding:10px 14px;text-align:right;font-family:'JetBrains Mono';color:var(--muted);font-size:0.72rem;">—</td>
+        <td style="padding:10px 14px;text-align:right;font-family:'JetBrains Mono';color:${avgUnreal >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;font-size:0.72rem;">
+          ${avgUnreal >= 0 ? '+' : ''}₹${fmt(avgUnreal)}
+        </td>
+        <td style="padding:10px 14px;text-align:right;color:var(--muted);font-size:0.72rem;">—</td>
+        <td style="padding:10px 14px;text-align:right;font-family:'JetBrains Mono';color:${avgTotalColor};font-weight:700;font-size:0.72rem;">
+          ${avgTotal >= 0 ? '+' : ''}₹${fmt(avgTotal)}
+        </td>
+        <td style="padding:10px 14px;text-align:right;" colspan="3">
+          <span style="font-family:'JetBrains Mono';color:${avgPctColor};font-weight:700;font-size:0.82rem;">
+            ${avgPct >= 0 ? '+' : ''}${avgPct.toFixed(2)}%
+          </span>
+          <div style="font-size:0.62rem;color:var(--muted);margin-top:2px;">
+            🟢 ${positiveDays}d profit &nbsp; 🔴 ${negativeDays}d loss
+          </div>
+        </td>
+      </tr>
+    </tfoot>
+    </table>`;
+
+  el.innerHTML = html;
+}
+
+function deleteSnapshot(date) {
+  dailySnapshots = dailySnapshots.filter(s => s.date !== date);
+  saveState();
+  renderDailyTracking();
+  toast('Snapshot for ' + date + ' deleted', 'info');
+}
+
 function saveState() {
-  localStorage.setItem('etfkidukan_state', JSON.stringify({ positions, closedTrades, config }));
+  localStorage.setItem('etfkidukan_state', JSON.stringify({ positions, closedTrades, config, dailySnapshots }));
 }
 
 // ═══════════════════════════════════════════════
@@ -1646,6 +1845,7 @@ function showSection(id) {
   if (id === 'analytics') renderAnalytics();
   if (id === 'portfolio') renderPortfolio();
   if (id === 'dashboard') renderDashboard();
+  if (id === 'settings') { autoSnapshot(); renderDailyTracking(); }
   if (id === 'screener') renderFullTable();
   if (id === 'dhan') renderDhanSection();
 }
@@ -3434,14 +3634,16 @@ function updateProxyWidget(state) {
     badge.className      = 'proxy-badge active';
     badge.textContent    = '● Active';
     statusLine.className = 'proxy-status-line active';
-    statusLine.innerHTML = `✓ All Dhan API calls routed through <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">${proxyUrl}</code>`;
+    // On Render the proxy is the server itself — use relative path always
+    const effectiveBase = isRemoteHosted() ? '/dhan' : proxyUrl + '/dhan';
+    const displayLabel  = isRemoteHosted() ? window.location.origin + ' (built-in)' : proxyUrl;
+    statusLine.innerHTML = `✓ All Dhan API calls routed through <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">${displayLabel}</code>`;
     if (testBtn) testBtn.textContent = '⚡ Test Connection';
-    // Set BOTH proxyMode and proxyBase atomically
     dhanState.proxyMode = 'local';
-    dhanState.proxyBase = proxyUrl + '/dhan';   // e.g. http://localhost:3001/dhan
+    dhanState.proxyBase = effectiveBase;
     console.log('[Proxy] Active — routing via', dhanState.proxyBase);
-    if (routingProx) routingProx.innerHTML = '<span style="color:var(--green)">🟢 Proxy active — ' + dhanState.proxyBase + '</span>';
-    if (routingTgt)  routingTgt.textContent = dhanState.proxyBase + '/v2/...';
+    if (routingProx) routingProx.innerHTML = '<span style="color:var(--green)">🟢 Proxy active — ' + effectiveBase + '</span>';
+    if (routingTgt)  routingTgt.textContent = effectiveBase + '/v2/...';
     updateDiagnosisTip('proxy-ok');
   } else if (state === 'testing') {
     badge.className      = 'proxy-badge inactive';
@@ -3536,14 +3738,19 @@ function fetchWithTimeout(url, options, ms) {
 }
 
 async function testProxyConnection(silent) {
-  const proxyUrl = (document.getElementById('proxyUrlInput')?.value || 'http://localhost:3001').replace(/\/$/, '');
+  // On Render the server IS the proxy — use relative /health (same origin)
+  const proxyUrl = isRemoteHosted()
+    ? window.location.origin
+    : (document.getElementById('proxyUrlInput')?.value || 'http://localhost:3001').replace(/\/$/, '');
+  const healthUrl = isRemoteHosted() ? '/health' : proxyUrl + '/health';
+
   if (!silent) updateProxyWidget('testing');
   try {
-    const r = await fetchWithTimeout(proxyUrl + '/health', {}, 3000);
+    const r = await fetchWithTimeout(healthUrl, {}, 5000);
     const d = await r.json();
     if (d.status === 'ok' && d.proxy === 'Dhan API Proxy') {
       updateProxyWidget('active');
-      if (!silent) toast('🟢 Proxy connected on ' + proxyUrl, 'success');
+      if (!silent) toast('🟢 Proxy connected' + (isRemoteHosted() ? ' (Render built-in)' : ' on ' + proxyUrl), 'success');
       return true;
     } else {
       updateProxyWidget('error');
@@ -3551,7 +3758,7 @@ async function testProxyConnection(silent) {
     }
   } catch(e) {
     updateProxyWidget('error');
-    if (!silent) toast('⚠️ Proxy not reachable at ' + proxyUrl + ' — run install-autostart.js', 'info');
+    if (!silent) toast('⚠️ Proxy not reachable — ' + e.message, 'info');
     return false;
   }
 }
@@ -3618,9 +3825,12 @@ function copyProxyCmd() {
 // Ensure proxyBase is always set when proxy is active
 // Guards against timing issues where proxyBase was empty when API fires
 function ensureProxyBase() {
-  if (dhanState.proxyMode === 'local' && !dhanState.proxyBase) {
-    const pu = getProxyUrl();
-    dhanState.proxyBase = pu + '/dhan';
+  if (isRemoteHosted()) {
+    // Always force relative path on Render — never let it drift to localhost
+    dhanState.proxyMode = 'local';
+    dhanState.proxyBase = '/dhan';
+  } else if (dhanState.proxyMode === 'local' && !dhanState.proxyBase) {
+    dhanState.proxyBase = getProxyUrl() + '/dhan';
     console.log('[ensureProxyBase] restored proxyBase to', dhanState.proxyBase);
   }
 }
@@ -3636,15 +3846,9 @@ function updateProxyStatusBadge(text, color) {
 }
 
 function dhanApiUrl(path) {
-  if (dhanState.proxyMode === 'local') {
-    // Ensure proxyBase is always a full absolute URL
-    const base = dhanState.proxyBase || getProxyUrl() + '/dhan';
-    if (!base.startsWith('http')) {
-      // Fallback safety — should never happen but log it
-      console.warn('[dhanApiUrl] proxyBase not absolute:', base, '— falling back to direct');
-      addRequestLog('WARN', 'proxyBase was empty — check proxy setup', 'error');
-      return 'https://' + (dhanState.dhanApiBase || 'api.dhan.co') + path;
-    }
+  // Always prefer proxy — on Render proxyMode is always 'local'
+  if (dhanState.proxyMode === 'local' || isRemoteHosted()) {
+    const base = dhanState.proxyBase || (isRemoteHosted() ? '/dhan' : 'http://localhost:3001/dhan');
     return base + path;
   }
   return 'https://' + (dhanState.dhanApiBase || 'api.dhan.co') + path;
@@ -3725,26 +3929,29 @@ async function dhanConnect() {
   document.getElementById('dhanStatusBar').className     = 'dhan-status-bar connecting';
   document.getElementById('dhanStatusText').textContent  = '\u23f3 Detecting proxy & connecting...';
 
-  // Step 1 — ALWAYS detect proxy first and WAIT for result
-  const proxyOk = await detectProxy();
-  addRequestLog('PROXY', proxyOk ? '\u2705 http://localhost:3001' : '\u274c Not found', proxyOk ? 'ok' : 'error');
-
-  if (!proxyOk) {
-    // Credentials saved but warn clearly
-    dhanState.connected = true;
-    localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token, apiBase: dhanState.dhanApiBase || 'api.dhan.co' }));
-    updateDhanStatusUI(true);
-    renderDhanAccountCorsMode();
-    toast('\u26a0\ufe0f Proxy not running — start it first, then reconnect', 'error');
-    return;
-  }
-
-  // Step 2 — Proxy confirmed: ensure proxyBase is set before any API call
-  if (dhanState.proxyMode !== 'local' || !dhanState.proxyBase) {
+  // Step 1 — Set up proxy routing
+  if (isRemoteHosted()) {
+    // On Render: server IS the proxy, always available, use relative paths
+    dhanState.proxyMode = 'local';
+    dhanState.proxyBase = '/dhan';
+    addRequestLog('PROXY', '\u2705 Render built-in (/dhan)', 'ok');
+    console.log('[dhanConnect] Render mode — proxyBase = /dhan');
+  } else {
+    // Local: detect proxy first
+    const proxyOk = await detectProxy();
+    addRequestLog('PROXY', proxyOk ? '\u2705 http://localhost:3001' : '\u274c Not found', proxyOk ? 'ok' : 'error');
+    if (!proxyOk) {
+      dhanState.connected = true;
+      localStorage.setItem('dhan_creds', JSON.stringify({ clientId, token, apiBase: dhanState.dhanApiBase || 'api.dhan.co' }));
+      updateDhanStatusUI(true);
+      renderDhanAccountCorsMode();
+      toast('\u26a0\ufe0f Proxy not running — start node server.js first, then reconnect', 'error');
+      return;
+    }
     const pu = getProxyUrl();
     dhanState.proxyMode = 'local';
-    dhanState.proxyBase = pu + '/dhan';
-    console.log('[dhanConnect] proxyBase set to', dhanState.proxyBase);
+    dhanState.proxyBase = pu ? pu + '/dhan' : '/dhan';
+    console.log('[dhanConnect] Local mode — proxyBase =', dhanState.proxyBase);
   }
 
   try {
@@ -3805,10 +4012,12 @@ function dhanApiCall(method, apiPath, body) {
   .catch(err => {
     let label;
     if (err instanceof TypeError) {
-      if (!url.startsWith('http')) {
-        label = 'BAD-URL: proxyBase was empty — click Test Connection first';
+      if (url.startsWith('/dhan')) {
+        label = 'SERVER-ERR: request to ' + url + ' failed — is the server running?';
+      } else if (!url.startsWith('http')) {
+        label = 'BAD-URL: proxyBase was empty — reconnect Dhan';
       } else if (url.includes('localhost') || url.includes('127.0.0.1')) {
-        label = 'PROXY-DOWN: proxy not reachable — run node dhan-proxy-server.js';
+        label = 'PROXY-DOWN: proxy not reachable — run node server.js';
       } else {
         label = 'CORS-BLOCKED: direct call blocked by browser';
       }
@@ -3891,6 +4100,8 @@ function renderRequestLog() {
     const color   = isCors ? 'var(--red)' : r.level === 'err' ? '#ff8c42' : isOk ? 'var(--green)' : 'var(--muted)';
     const shortUrl = r.url
       .replace('http://localhost:3001/dhan', '[proxy]')
+      .replace(window.location.origin + '/dhan', '[proxy]')
+      .replace('/dhan', '[proxy]')          // relative path form
       .replace(/https:\/\/[^/]+\.dhan\.co/, '[dhan]');
     const detailId = 'rlog-detail-' + i;
     const hasDetail = !!r.detail;
